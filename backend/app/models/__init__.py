@@ -6,6 +6,10 @@ from .project import Project
 from .requirement import Requirement
 from .task import Task
 from .document import Document
+from .audit_log import AuditLog
+from .project_agent import ProjectAgent
+from .task_assignment import TaskAssignment
+from .notification import Notification
 
 __all__ = [
     "Base",
@@ -15,4 +19,8 @@ __all__ = [
     "Requirement",
     "Task",
     "Document",
+    "AuditLog",
+    "ProjectAgent",
+    "TaskAssignment",
+    "Notification",
 ]

@@ -7,7 +7,7 @@ from .config import settings
 from .database import engine, SessionLocal
 from .models.base import Base
 from .models.user import User
-from .api import auth, agents, projects, tasks, requirements, documents
+from .api import auth, agents, projects, tasks, requirements, documents, audit_logs, project_agents, task_assignments, notifications
 from .utils.security import hash_password
 
 # 创建数据库表
@@ -36,6 +36,10 @@ app.include_router(projects.router)
 app.include_router(tasks.router)
 app.include_router(requirements.router)
 app.include_router(documents.router)
+app.include_router(audit_logs.router)
+app.include_router(project_agents.router)
+app.include_router(task_assignments.router)
+app.include_router(notifications.router)
 
 
 @app.on_event("startup")

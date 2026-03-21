@@ -71,6 +71,9 @@ npm run dev
 | 项目 | GET /api/projects/:id | ✅ |
 | 项目 | PUT /api/projects/:id | ✅ |
 | 项目 | DELETE /api/projects/:id | ✅ |
+| 项目 Agent | GET /api/projects/:id/agents | ✅ |
+| 项目 Agent | POST /api/projects/:id/agents | ✅ |
+| 项目 Agent | DELETE /api/projects/:id/agents/:agent_id | ✅ |
 | 需求 | GET /api/requirements | ✅ |
 | 需求 | POST /api/requirements | ✅ |
 | 需求 | GET /api/requirements/:id | ✅ |
@@ -89,6 +92,13 @@ npm run dev
 | 文档 | GET /api/documents/:id | ✅ |
 | 文档 | DELETE /api/documents/:id | ✅ |
 | 文档 | GET /api/documents/:id/download | ✅ |
+| 审计日志 | GET /api/audit-logs | ✅ |
+| 任务分配记录 | GET /api/task-assignments/task/:task_id | ✅ |
+| 任务分配记录 | GET /api/task-assignments/agent/:agent_id | ✅ |
+| 通知中心 | GET /api/notifications | ✅ |
+| 通知中心 | GET /api/notifications/unread-count | ✅ |
+| 通知中心 | POST /api/notifications/:id/read | ✅ |
+| 通知中心 | POST /api/notifications/read-all | ✅ |
 | WebSocket | WS /ws/agent/connect | ✅ |
 
 #### Services 层
@@ -100,6 +110,10 @@ npm run dev
 | ProjectService | 项目 CRUD、统计 | ✅ |
 | TaskService | 任务 CRUD、分配、看板 | ✅ |
 | DocumentService | 文档上传、下载、版本管理 | ✅ |
+| AuditLogService | 审计日志记录、查询 | ✅ |
+| ProjectAgentService | 项目-Agent 关联管理 | ✅ |
+| TaskAssignmentService | 任务分配记录管理 | ✅ |
+| NotificationService | 通知管理、消息推送 | ✅ |
 
 #### 前端页面
 
@@ -120,12 +134,9 @@ npm run dev
 
 | 功能 | 说明 | 优先级 |
 |------|------|--------|
-| 审计日志 | 记录关键操作日志 | 低 |
-| 项目-Agent 关联表 | 项目成员管理 | 中 |
-| Task Assignment 表 | 任务分配记录 | 中 |
 | 文档在线预览 | Markdown/PDF 预览 | 低 |
 | 甘特图视图 | 任务时间线展示 | 低 |
-| 通知中心 | 系统通知推送 | 低 |
+| WebSocket 实时推送 | 通知实时推送 | 中 |
 
 ## 技术栈
 
