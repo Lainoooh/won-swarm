@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.models.base import Base
+from .models.base import Base
 
 # SQLite 数据库连接
 SQLALCHEMY_DATABASE_URL = "sqlite:///./wonswarm.db"
