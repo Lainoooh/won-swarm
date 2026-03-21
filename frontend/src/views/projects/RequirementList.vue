@@ -105,8 +105,8 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getProjectRequirements, createRequirement, updateRequirementStatus } from '@/api/requirement'
-import { getProjectDetail } from '@/api/project'
+import { getRequirements, createRequirement, updateRequirementStatus } from '@/api/requirement'
+import { getProjectDetail, getProjectRequirements } from '@/api/project'
 
 const route = useRoute()
 
