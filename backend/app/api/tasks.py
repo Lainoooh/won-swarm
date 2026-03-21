@@ -6,6 +6,10 @@ import uuid
 from ..database import get_db
 from ..models.task import Task
 from ..models.requirement import Requirement
+from ..models.agent import Agent
+
+# 导入 WebSocket 管理器
+from .agents import ws_manager
 
 router = APIRouter(prefix="/api/tasks", tags=["任务管理"])
 
@@ -124,13 +128,31 @@ async def assign_task(task_id: str, assign_data: dict, db: Session = Depends(get
     if not task:
         raise HTTPException(status_code=404, detail="任务不存在")
 
-    task.assignee_id = assign_data.get("agent_id")
+    agent_id = assign_data.get("agent_id")
+    if not agent_id:
+        raise HTTPException(status_code=400, detail="缺少 agent_id")
+
+    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent 不存在")
+
+    task.assignee_id = agent_id
     task.assigned_at = datetime.utcnow()
     task.status = "todo"  # 待领取
 
     db.commit()
 
-    # TODO: 通过 WebSocket 通知 Agent
+    # 通过 WebSocket 通知 Agent
+    try:
+        await ws_manager.send_to_agent(agent_id, {
+            "type": "task_assigned",
+            "task_id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "priority": "P2"
+        })
+    except Exception as e:
+        print(f"WebSocket 通知失败：{e}")
 
     return {
         "code": 200,
@@ -150,11 +172,13 @@ async def update_task_status(task_id: str, status_data: dict, db: Session = Depe
     if "status" in status_data:
         task.status = status_data["status"]
     if "progress" in status_data:
-        # 可以在这里记录进度
-        pass
+        if task.result is None:
+            task.result = {}
+        task.result["progress"] = status_data["progress"]
     if "message" in status_data:
-        # 可以在这里记录状态消息
-        pass
+        if task.result is None:
+            task.result = {}
+        task.result["status_message"] = status_data["message"]
 
     task.updated_at = datetime.utcnow()
 
@@ -178,6 +202,13 @@ async def complete_task(task_id: str, complete_data: dict, db: Session = Depends
     task.status = "completed"
     task.completed_at = datetime.utcnow()
     task.result = complete_data.get("result", {})
+
+    # 更新关联的 Agent 状态
+    if task.assignee_id:
+        agent = db.query(Agent).filter(Agent.id == task.assignee_id).first()
+        if agent:
+            agent.status = "idle"
+            agent.current_task_id = None
 
     db.commit()
 

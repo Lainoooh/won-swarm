@@ -233,29 +233,115 @@ async def get_pending_tasks(agent_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{task_id}/claim", response_model=CommonResponse)
-async def claim_task(task_id: str, agent: Agent = Depends(lambda: None)):
+async def claim_task(task_id: str, agent_id: str = Form(...), db: Session = Depends(get_db)):
     """
     领取任务
     """
-    # TODO: 实现任务领取逻辑
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent 不存在")
+
+    # 检查任务状态
+    if task.status != "todo":
+        raise HTTPException(status_code=400, detail="任务不可领取")
+
+    # 检查 Agent 是否已分配给此任务
+    if task.assignee_id != agent_id:
+        raise HTTPException(status_code=400, detail="任务未分配给此 Agent")
+
+    # 更新任务状态为执行中
+    task.status = "in_progress"
+    task.accepted_at = datetime.utcnow()
+
+    # 更新 Agent 状态
+    agent.status = "busy"
+    agent.current_task_id = task_id
+    agent.last_heartbeat = datetime.utcnow()
+
+    db.commit()
+
+    # 通过 WebSocket 通知任务已领取
+    try:
+        await ws_manager.send_to_agent(agent_id, {
+            "type": "task_claimed",
+            "task_id": task_id,
+            "message": "任务领取成功"
+        })
+    except Exception:
+        pass  # WebSocket 未连接也不影响领取
+
     return CommonResponse(code=200, message="任务领取成功")
 
 
 @router.post("/{task_id}/status", response_model=CommonResponse)
-async def update_task_status(task_id: str, status_data: dict):
+async def update_task_status(task_id: str, status_data: dict, db: Session = Depends(get_db)):
     """
     上报任务状态
     """
-    # TODO: 实现任务状态更新逻辑
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    if "status" in status_data:
+        task.status = status_data["status"]
+    if "progress" in status_data:
+        # 进度可以在 result 中记录
+        if task.result is None:
+            task.result = {}
+        task.result["progress"] = status_data["progress"]
+    if "message" in status_data:
+        if task.result is None:
+            task.result = {}
+        task.result["status_message"] = status_data["message"]
+
+    task.updated_at = datetime.utcnow()
+
+    db.commit()
+
     return CommonResponse(code=200, message="状态已更新")
 
 
 @router.post("/{task_id}/complete", response_model=CommonResponse)
-async def complete_task(task_id: str, complete_data: dict):
+async def complete_task(task_id: str, complete_data: dict, db: Session = Depends(get_db)):
     """
     完成任务
     """
-    # TODO: 实现任务完成逻辑
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    task.status = "completed"
+    task.completed_at = datetime.utcnow()
+    task.result = complete_data.get("result", {})
+    if "message" in complete_data:
+        if task.result is None:
+            task.result = {}
+        task.result["message"] = complete_data["message"]
+
+    # 更新关联的 Agent 状态
+    if task.assignee_id:
+        agent = db.query(Agent).filter(Agent.id == task.assignee_id).first()
+        if agent:
+            agent.status = "idle"
+            agent.current_task_id = None
+            agent.last_heartbeat = datetime.utcnow()
+
+            # 通过 WebSocket 通知任务完成
+            try:
+                await ws_manager.send_to_agent(agent.id, {
+                    "type": "task_completed_notify",
+                    "task_id": task_id,
+                    "message": "任务已完成"
+                })
+            except Exception:
+                pass
+
+    db.commit()
+
     return CommonResponse(code=200, message="任务已完成")
 
 

@@ -89,3 +89,40 @@ def verify_platform_ak(ak: str, db: Session) -> Optional[Agent]:
         except Exception:
             pass
     return None
+
+
+def get_db_session() -> Session:
+    """获取数据库会话（非依赖版本，用于内部调用）"""
+    return SessionLocal()
+
+
+class TokenUser:
+    """Token 用户信息"""
+    def __init__(self, user_id: str, username: str):
+        self.id = user_id
+        self.username = username
+
+
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: Session = Depends(get_db)
+) -> Optional[TokenUser]:
+    """可选用户认证 - 如果提供 token 则验证，不提供也允许访问"""
+    if not credentials:
+        return None
+
+    token = credentials.credentials
+    payload = decode_access_token(token)
+
+    if not payload:
+        return None
+
+    user_id = payload.get("sub")
+    if not user_id:
+        return None
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.is_active:
+        return None
+
+    return TokenUser(user.id, user.username)
