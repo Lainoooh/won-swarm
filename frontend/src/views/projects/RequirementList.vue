@@ -338,7 +338,7 @@ import {
   getRequirements,
   createRequirement,
   updateRequirement,
-  deleteRequirement,
+  deleteRequirement as deleteRequirementApi,
   getRequirementTasks
 } from '@/api/requirement'
 import { getProjectDetail } from '@/api/project'
@@ -611,7 +611,7 @@ const deleteRequirement = async (row) => {
       }
     )
 
-    await deleteRequirement(row.id)
+    await deleteRequirementApi(row.id)
     ElMessage.success('需求已删除')
     await fetchList()
   } catch (error) {

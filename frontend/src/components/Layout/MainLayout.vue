@@ -111,11 +111,12 @@ const isCollapse = ref(false)
 
 const activeMenu = computed(() => {
   const path = route.path
-  // 支持子路径匹配
-  if (path.startsWith('/projects/')) {
+
+  // 特殊处理 /projects/:id 这种情况，应该高亮 /projects
+  if (path === '/projects' || path.startsWith('/projects/')) {
     return '/projects'
   }
-  if (path.startsWith('/agents/')) {
+  if (path === '/agents' || path.startsWith('/agents/')) {
     return '/agents'
   }
   return path
