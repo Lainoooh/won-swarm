@@ -40,6 +40,9 @@ export const RoleTag = ({ role }) => {
     'backend-developer': { label: '后端研发', color: 'text-blue-600 bg-blue-50 border-blue-200' },
     'ui-designer': { label: 'UI 设计', color: 'text-pink-600 bg-pink-50 border-pink-200' },
     'qa-engineer': { label: '测试工程', color: 'text-orange-600 bg-orange-50 border-orange-200' },
+    'architect': { label: '架构师', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+    'tech-lead': { label: '技术主管', color: 'text-teal-600 bg-teal-50 border-teal-200' },
+    'analyst': { label: '分析师', color: 'text-lime-600 bg-lime-50 border-lime-200' },
   };
   const config = roleMap[role] || { label: role, color: 'text-slate-600 bg-slate-100 border-slate-200' };
   return <span className={`px-1 py-0.5 text-[9px] uppercase rounded border font-medium ${config.color}`}>{config.label}</span>;
