@@ -1,11 +1,13 @@
 // --- Mock Data ---
 
 export const mockAgents = [
-  { id: 'ag-101', name: 'PC2-项目经理', roles: ['project-manager'], status: 'online', task: 'TASK-001', progress: 85, lastPing: '2s ago', sk: 'sk_x8f...2a', caps: ['task-decomposition'] },
-  { id: 'ag-102', name: 'PC2-前端开发', roles: ['frontend-developer'], status: 'idle', task: null, progress: 0, lastPing: '5s ago', sk: 'sk_v2m...9p', caps: ['vue3', 'react'] },
-  { id: 'ag-103', name: 'PC2-后端开发', roles: ['backend-developer'], status: 'busy', task: 'TASK-002', progress: 42, lastPing: '1s ago', sk: 'sk_q1l...5c', caps: ['fastapi', 'python'] },
-  { id: 'ag-104', name: 'MAC-UI 设计', roles: ['ui-designer'], status: 'offline', task: null, progress: 0, lastPing: '2h ago', sk: 'sk_p9k...1z', caps: ['figma'] },
-  { id: 'ag-105', name: 'Server-测试专家', roles: ['qa-engineer'], status: 'online', task: 'TASK-003', progress: 10, lastPing: '1s ago', sk: 'sk_t5b...8r', caps: ['pytest', 'selenium'] },
+  { id: 'ag-101', name: 'PC2-项目经理', roles: ['project-manager'], status: 'online', task: 'TASK-001', progress: 85, lastPing: '2s ago', sk: 'sk_x8f...2a', caps: ['task-decomposition'], model: 'claude-sonnet-4-6' },
+  { id: 'ag-102', name: 'PC2-前端开发', roles: ['frontend-developer'], status: 'idle', task: null, progress: 0, lastPing: '5s ago', sk: 'sk_v2m...9p', caps: ['vue3', 'react'], model: 'claude-opus-4-6' },
+  { id: 'ag-103', name: 'PC2-后端开发', roles: ['backend-developer'], status: 'busy', task: 'TASK-002', progress: 42, lastPing: '1s ago', sk: 'sk_q1l...5c', caps: ['fastapi', 'python'], model: 'claude-sonnet-4-6' },
+  { id: 'ag-104', name: 'MAC-UI 设计', roles: ['ui-designer'], status: 'offline', task: null, progress: 0, lastPing: '2h ago', sk: 'sk_p9k...1z', caps: ['figma'], model: 'claude-haiku-4-5-20251001' },
+  { id: 'ag-105', name: 'Server-测试专家', roles: ['qa-engineer'], status: 'online', task: 'TASK-003', progress: 10, lastPing: '1s ago', sk: 'sk_t5b...8r', caps: ['pytest', 'selenium'], model: 'claude-sonnet-4-6' },
+  { id: 'ag-106', name: 'PC2-架构师', roles: ['architect', 'tech-lead'], status: 'idle', task: null, progress: 0, lastPing: '10s ago', sk: 'sk_a7c...3d', caps: ['system-design', 'code-review'], model: 'claude-opus-4-6' },
+  { id: 'ag-107', name: 'MAC-产品专家', roles: ['product-manager', 'analyst'], status: 'busy', task: 'TASK-008', progress: 60, lastPing: '3s ago', sk: 'sk_m4n...6k', caps: ['requirement-analysis', 'prd'], model: 'claude-sonnet-4-6' },
 ];
 
 export const mockProjects = [

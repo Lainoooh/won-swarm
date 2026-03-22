@@ -6,7 +6,7 @@ import {
   PauseCircle, SkipForward, Ban, Edit, Trash2
 } from 'lucide-react';
 import { StatusBadge, PriorityTag, ReqTypeTag } from '../components/utils/Tags';
-import { FeatureFlowModal, AttachmentModal, CreateRequirementModal } from '../components/utils/Modal';
+import { FeatureFlowModal, AttachmentModal, CreateRequirementModal, ModuleModal, FeatureModal, ConfirmModal } from '../components/utils/Modal';
 import { mockProjects, mockReqTree } from '../data/mockData';
 
 const RequirementTree = () => {
@@ -18,6 +18,15 @@ const RequirementTree = () => {
   const [activeFeature, setActiveFeature] = useState(null);
   const [activeAttachment, setActiveAttachment] = useState(null);
   const [showCreateReqModal, setShowCreateReqModal] = useState(false);
+  const [showModuleModal, setShowModuleModal] = useState(false);
+  const [showFeatureModal, setShowFeatureModal] = useState(false);
+  const [editingModule, setEditingModule] = useState(null);
+  const [editingFeature, setEditingFeature] = useState(null);
+  const [currentModule, setCurrentModule] = useState(null);
+
+  // 确认弹窗状态
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState({});
 
   // Find current project from mock data
   const project = mockProjects.find(p => p.id === projectId) || mockProjects[0];
@@ -29,6 +38,125 @@ const RequirementTree = () => {
 
   const toggleNode = (id) => setTreeData(treeData.map(node => node.id === id ? { ...node, expanded: !node.expanded } : node));
   const openFeatureModal = (feature) => setActiveFeature(feature);
+
+  // 通用确认弹窗处理
+  const showConfirmModal = (config) => {
+    setConfirmConfig(config);
+    setShowConfirm(true);
+  };
+
+  const handleConfirm = () => {
+    if (confirmConfig.onConfirm) {
+      confirmConfig.onConfirm();
+    }
+    setShowConfirm(false);
+    setConfirmConfig({});
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setConfirmConfig({});
+  };
+
+  // Module handlers
+  const handleAddModule = () => {
+    setEditingModule(null);
+    setShowModuleModal(true);
+  };
+
+  const handleEditModule = (module, e) => {
+    e.stopPropagation();
+    setEditingModule(module);
+    setShowModuleModal(true);
+  };
+
+  const handleDeleteModule = (module, e) => {
+    e.stopPropagation();
+    showConfirmModal({
+      type: 'danger',
+      title: '删除模块确认',
+      message: `确定要删除模块"${module.title}"吗？删除后该模块下的所有子功能也将被删除，此操作不可恢复。`,
+      confirmText: '确认删除',
+      onConfirm: () => console.log('Delete module:', module.id)
+    });
+  };
+
+  const handleSaveModule = (moduleData) => {
+    console.log('Save module:', moduleData);
+    if (editingModule) {
+      setTreeData(treeData.map(m => m.id === moduleData.id ? moduleData : m));
+    } else {
+      setTreeData([...treeData, moduleData]);
+    }
+  };
+
+  const handleAddFeature = (module, e) => {
+    e.stopPropagation();
+    setCurrentModule(module);
+    setEditingFeature(null);
+    setShowFeatureModal(true);
+  };
+
+  // Feature handlers
+  const handleEditFeature = (feature, module, e) => {
+    e.stopPropagation();
+    setCurrentModule(module);
+    setEditingFeature(feature);
+    setShowFeatureModal(true);
+  };
+
+  const handleDeleteFeature = (feature, e) => {
+    e.stopPropagation();
+    showConfirmModal({
+      type: 'danger',
+      title: '删除功能确认',
+      message: `确定要删除功能"${feature.title}"吗？删除后将无法恢复。`,
+      confirmText: '确认删除',
+      onConfirm: () => console.log('Delete feature:', feature.id)
+    });
+  };
+
+  const handleSaveFeature = (featureData) => {
+    console.log('Save feature:', featureData);
+    setShowFeatureModal(false);
+    setCurrentModule(null);
+    setEditingFeature(null);
+  };
+
+  // Feature action buttons
+  const handleFeatureCollaborate = (feature) => {
+    setActiveFeature(feature);
+  };
+
+  const handleFeatureCancel = (feature) => {
+    showConfirmModal({
+      type: 'warning',
+      title: '取消流程确认',
+      message: `确定要取消功能"${feature.title}"的流程吗？取消后该功能将被标记为已取消状态。`,
+      confirmText: '确认取消',
+      onConfirm: () => console.log('Cancel feature:', feature.id)
+    });
+  };
+
+  const handleFeaturePause = (feature) => {
+    showConfirmModal({
+      type: 'warning',
+      title: '叫停流程确认',
+      message: `确定要叫停功能"${feature.title}"吗？叫停后该功能将暂停执行，直到重新激活。`,
+      confirmText: '确认叫停',
+      onConfirm: () => console.log('Pause feature:', feature.id)
+    });
+  };
+
+  const handleFeatureAdvance = (feature) => {
+    showConfirmModal({
+      type: 'info',
+      title: '推进流程确认',
+      message: `确定要将功能"${feature.title}"推进到下一阶段吗？`,
+      confirmText: '确认推进',
+      onConfirm: () => console.log('Advance feature:', feature.id)
+    });
+  };
 
   return (
     <div className="flex flex-1 w-full animate-in slide-in-from-right-4 duration-300 bg-white/70 backdrop-blur-2xl border border-white/60 rounded-xl shadow-sm overflow-hidden min-h-0">
@@ -139,9 +267,9 @@ const RequirementTree = () => {
                     <div className="w-16 text-center shrink-0"></div>
                     <div className="w-[280px] flex justify-center items-center border-l border-transparent shrink-0"></div>
                     <div className="w-[160px] flex justify-end items-center gap-2 shrink-0 pr-4" onClick={(e) => e.stopPropagation()}>
-                       <button className="px-2 py-1 bg-blue-50 text-blue-600 hover:border-blue-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors mr-1"><Plus size={12}/> 子功能</button>
-                       <button className="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="编辑"><Edit size={14}/></button>
-                       <button className="p-1 text-slate-400 hover:text-rose-600 transition-colors" title="删除"><Trash2 size={14}/></button>
+                       <button onClick={(e) => handleAddFeature(module, e)} className="px-2 py-1 bg-blue-50 text-blue-600 hover:border-blue-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors mr-1"><Plus size={12}/> 子功能</button>
+                       <button onClick={(e) => handleEditModule(module, e)} className="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="编辑"><Edit size={14}/></button>
+                       <button onClick={(e) => handleDeleteModule(module, e)} className="p-1 text-slate-400 hover:text-rose-600 transition-colors" title="删除"><Trash2 size={14}/></button>
                     </div>
                   </div>
 
@@ -165,14 +293,14 @@ const RequirementTree = () => {
                       <div className="w-16 flex justify-center z-10 shrink-0"><PriorityTag p={feature.priority} /></div>
                       <div className="w-16 flex justify-center z-10 shrink-0"><StatusBadge status={feature.status} type="req" /></div>
                       <div className="w-[280px] flex justify-center items-center gap-1.5 z-10 shrink-0 border-l border-transparent" onClick={(e) => e.stopPropagation()}>
-                         <button onClick={() => openFeatureModal(feature)} className="px-2 py-1 bg-indigo-50 text-indigo-600 hover:border-indigo-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors"><Users size={12}/> 协同</button>
-                         <button className="px-2 py-1 bg-rose-50 text-rose-600 hover:border-rose-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors"><Ban size={12}/> 取消</button>
-                         <button className="px-2 py-1 bg-amber-50 text-amber-600 hover:border-amber-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors"><PauseCircle size={12}/> 叫停</button>
-                         <button className="px-2 py-1 bg-blue-50 text-blue-600 hover:border-blue-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors"><SkipForward size={12}/> 推进</button>
+                         <button onClick={() => handleFeatureCollaborate(feature)} className="px-2 py-1 bg-indigo-50 text-indigo-600 hover:border-indigo-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors"><Users size={12}/> 协同</button>
+                         <button onClick={() => handleFeatureCancel(feature)} className="px-2 py-1 bg-rose-50 text-rose-600 hover:border-rose-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors"><Ban size={12}/> 取消</button>
+                         <button onClick={() => handleFeaturePause(feature)} className="px-2 py-1 bg-amber-50 text-amber-600 hover:border-amber-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors"><PauseCircle size={12}/> 叫停</button>
+                         <button onClick={() => handleFeatureAdvance(feature)} className="px-2 py-1 bg-blue-50 text-blue-600 hover:border-blue-200 border border-transparent rounded text-[10px] font-bold flex items-center gap-1 shadow-sm transition-colors"><SkipForward size={12}/> 推进</button>
                       </div>
                       <div className="w-[160px] flex justify-end items-center gap-2 z-10 shrink-0 border-l border-transparent pr-4" onClick={(e) => e.stopPropagation()}>
-                         <button className="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="编辑"><Edit size={14}/></button>
-                         <button className="p-1 text-slate-400 hover:text-rose-600 transition-colors" title="删除"><Trash2 size={14}/></button>
+                         <button onClick={(e) => handleEditFeature(feature, module, e)} className="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="编辑"><Edit size={14}/></button>
+                         <button onClick={(e) => handleDeleteFeature(feature, e)} className="p-1 text-slate-400 hover:text-rose-600 transition-colors" title="删除"><Trash2 size={14}/></button>
                       </div>
                     </div>
                   ))}
@@ -186,6 +314,38 @@ const RequirementTree = () => {
       {activeFeature && <FeatureFlowModal feature={activeFeature} onClose={() => setActiveFeature(null)} />}
       {activeAttachment && <AttachmentModal item={activeAttachment} onClose={() => setActiveAttachment(null)} />}
       {showCreateReqModal && <CreateRequirementModal onClose={() => setShowCreateReqModal(false)} />}
+      {showModuleModal && (
+        <ModuleModal
+          module={editingModule}
+          onClose={() => {
+            setShowModuleModal(false);
+            setEditingModule(null);
+          }}
+          onSave={handleSaveModule}
+        />
+      )}
+      {showFeatureModal && (
+        <FeatureModal
+          feature={editingFeature}
+          module={currentModule}
+          onClose={() => {
+            setShowFeatureModal(false);
+            setEditingFeature(null);
+            setCurrentModule(null);
+          }}
+          onSave={handleSaveFeature}
+        />
+      )}
+      {showConfirm && (
+        <ConfirmModal
+          type={confirmConfig.type}
+          title={confirmConfig.title}
+          message={confirmConfig.message}
+          confirmText={confirmConfig.confirmText}
+          onConfirm={confirmConfig.onConfirm}
+          onCancel={handleCancel}
+        />
+      )}
     </div>
   );
 };

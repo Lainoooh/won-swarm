@@ -4,10 +4,314 @@ import {
   Plus, Play, CheckCircle2, GitMerge, Box, Activity, Cpu,
   ChevronDown, ChevronRight, Terminal, Layout, Code, FileJson,
   Flag, CheckCircle, SkipForward, PauseCircle, Ban, Eye,
-  Edit, Trash2, Save, FolderOpen
+  Edit, Trash2, Save, FolderOpen, Search, AlertTriangle, Info
 } from 'lucide-react';
 import { RoleTag } from './Tags';
 import { mockAgents, mockTasks } from '../../data/mockData';
+
+// --- Confirm Modal Component (通用二次确认弹窗) ---
+export const ConfirmModal = ({
+  type = 'warning', // 'warning' | 'info' | 'danger'
+  title,
+  message,
+  confirmText = '确认',
+  cancelText = '取消',
+  onConfirm,
+  onCancel,
+  confirmLoading = false
+}) => {
+  const typeConfig = {
+    warning: {
+      icon: AlertTriangle,
+      iconColor: 'text-amber-500',
+      iconBg: 'bg-amber-50',
+      confirmBtn: 'bg-amber-600 hover:bg-amber-700 text-white'
+    },
+    danger: {
+      icon: AlertTriangle,
+      iconColor: 'text-rose-500',
+      iconBg: 'bg-rose-50',
+      confirmBtn: 'bg-rose-600 hover:bg-rose-700 text-white'
+    },
+    info: {
+      icon: Info,
+      iconColor: 'text-blue-500',
+      iconBg: 'bg-blue-50',
+      confirmBtn: 'bg-blue-600 hover:bg-blue-700 text-white'
+    }
+  };
+
+  const config = typeConfig[type];
+  const Icon = config.icon;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-200 px-4">
+      <div className="bg-white/95 backdrop-blur-2xl border border-white/60 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 w-[420px]">
+        <div className="p-4 flex items-start gap-3">
+          <div className={`${config.iconBg} ${config.iconColor} rounded-full p-2.5 shrink-0`}>
+            <Icon size={20} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-slate-800 mb-1">{title}</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">{message}</p>
+          </div>
+        </div>
+        <div className="p-3 border-t border-slate-200/60 bg-slate-50/50 flex justify-end gap-2 shrink-0">
+          <button
+            onClick={onCancel}
+            disabled={confirmLoading}
+            className="px-4 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={confirmLoading}
+            className={`px-4 py-1.5 ${config.confirmBtn} text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50`}
+          >
+            {confirmLoading && <CheckCircle2 size={12} className="animate-spin" />}
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Request Type Select Component (需求类型下拉) ---
+export const ReqTypeSelect = ({ value, onChange, placeholder = '选择需求类型', disabled = false, size = 'default' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const options = [
+    { value: 'functional', label: '功能需求', desc: '新增或修改功能' },
+    { value: 'non-functional', label: '非功能需求', desc: '性能、安全等' },
+    { value: 'technical', label: '技术需求', desc: '架构、重构等' },
+    { value: 'bug', label: '缺陷修复', desc: 'Bug 修复' },
+    { value: 'change', label: '变更需求', desc: '需求变更' }
+  ];
+
+  const selected = options.find(o => o.value === value);
+
+  const sizeClass = size === 'small' ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1.5 text-xs';
+
+  return (
+    <div className="relative">
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`w-full font-bold text-slate-800 bg-white border border-slate-200 rounded cursor-pointer flex items-center justify-between ${sizeClass} ${disabled ? 'opacity-50 cursor-not-allowed' : 'focus:outline-none focus:border-blue-400 shadow-sm'}`}
+      >
+        {selected ? (
+          <span>{selected.label}</span>
+        ) : (
+          <span className="text-slate-400">{placeholder}</span>
+        )}
+        <ChevronDown size={12} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[100] overflow-hidden">
+            {options.map(opt => (
+              <div
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                className={`px-3 py-2 hover:bg-blue-50 cursor-pointer transition-colors border-b border-slate-100 last:border-0 ${value === opt.value ? 'bg-blue-50/50' : ''}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-800">{opt.label}</span>
+                </div>
+                <span className="text-[9px] text-slate-500">{opt.desc}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// --- Priority Select Component (优先级下拉) ---
+export const PrioritySelect = ({ value, onChange, placeholder = '选择优先级', disabled = false, size = 'default' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const options = [
+    { value: 'P0', label: 'P0', desc: '最高优先级', color: 'text-rose-600 bg-rose-50' },
+    { value: 'P1', label: 'P1', desc: '高优先级', color: 'text-amber-600 bg-amber-50' },
+    { value: 'P2', label: 'P2', desc: '普通优先级', color: 'text-blue-600 bg-blue-50' },
+    { value: 'P3', label: 'P3', desc: '低优先级', color: 'text-slate-600 bg-slate-50' }
+  ];
+
+  const selected = options.find(o => o.value === value);
+
+  const sizeClass = size === 'small' ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1.5 text-xs';
+
+  return (
+    <div className="relative">
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`w-full font-mono font-bold text-slate-800 bg-white border border-slate-200 rounded cursor-pointer flex items-center justify-between ${sizeClass} ${disabled ? 'opacity-50 cursor-not-allowed' : 'focus:outline-none focus:border-blue-400 shadow-sm'}`}
+      >
+        {selected ? (
+          <span className={selected.color}>{selected.label}</span>
+        ) : (
+          <span className="text-slate-400">{placeholder}</span>
+        )}
+        <ChevronDown size={12} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[100] overflow-hidden">
+            {options.map(opt => (
+              <div
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                className={`px-3 py-2 hover:bg-blue-50 cursor-pointer transition-colors border-b border-slate-100 last:border-0 ${value === opt.value ? 'bg-blue-50/50' : ''}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-[11px] font-mono font-bold ${opt.color} px-1.5 py-0.5 rounded border border-current`}>{opt.label}</span>
+                  <span className="text-[9px] text-slate-500">{opt.desc}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// --- Agent Select Dropdown Component (Multi-select with search) ---
+export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent...' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'online': return 'bg-emerald-500';
+      case 'busy': return 'bg-amber-500';
+      case 'idle': return 'bg-blue-400';
+      case 'offline': return 'bg-slate-400';
+      default: return 'bg-slate-400';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch(status) {
+      case 'online': return '在线';
+      case 'busy': return '执行中';
+      case 'idle': return '空闲';
+      case 'offline': return '断线';
+      default: return status;
+    }
+  };
+
+  const filteredAgents = mockAgents.filter(agent => {
+    const searchLower = searchTerm.toLowerCase();
+    return agent.name.toLowerCase().includes(searchLower) ||
+           agent.roles.some(r => r.toLowerCase().includes(searchLower)) ||
+           agent.model.toLowerCase().includes(searchLower);
+  });
+
+  const toggleAgent = (agentId) => {
+    if (value.includes(agentId)) {
+      onChange(value.filter(id => id !== agentId));
+    } else {
+      onChange([...value, agentId]);
+    }
+  };
+
+  const removeAgent = (agentId, e) => {
+    e.stopPropagation();
+    onChange(value.filter(id => id !== agentId));
+  };
+
+  const selectedAgents = mockAgents.filter(a => value.includes(a.id));
+
+  return (
+    <div className="relative">
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm cursor-pointer min-h-[38px] flex flex-wrap gap-1.5 items-center"
+      >
+        {selectedAgents.length === 0 ? (
+          <span className="text-slate-400 select-none flex-1">{placeholder}</span>
+        ) : (
+          selectedAgents.map(agent => (
+            <span key={agent.id} className="bg-blue-100 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
+              <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(agent.status)}`}></span>
+              {agent.name}
+              <button onClick={(e) => removeAgent(agent.id, e)} className="hover:text-blue-900">
+                <X size={10} />
+              </button>
+            </span>
+          ))
+        )}
+        <ChevronDown size={12} className={`text-slate-400 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[100] max-h-60 overflow-hidden flex flex-col">
+            <div className="p-2 border-b border-slate-200 bg-slate-50">
+              <div className="relative">
+                <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="搜索 Agent 名称/角色/Model..."
+                  className="w-full text-xs bg-white border border-slate-200 rounded pl-7 pr-2 py-1.5 focus:outline-none focus:border-blue-400"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="overflow-y-auto max-h-48 custom-scrollbar">
+              {filteredAgents.length === 0 ? (
+                <div className="p-3 text-center text-[10px] text-slate-400">未找到匹配的 Agent</div>
+              ) : (
+                filteredAgents.map(agent => {
+                  const isSelected = value.includes(agent.id);
+                  return (
+                    <label
+                      key={agent.id}
+                      className={`flex items-center gap-2 p-2.5 hover:bg-blue-50 cursor-pointer transition-colors border-b border-slate-100 last:border-0 ${isSelected ? 'bg-blue-50/50' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleAgent(agent.id)}
+                        className="w-3.5 h-3.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`} title={getStatusText(agent.status)}></span>
+                          <span className="text-[11px] font-bold text-slate-800 truncate">{agent.name}</span>
+                          <span className="text-[9px] text-slate-500 bg-slate-100 px-1 rounded font-mono">{agent.model}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <div className="flex gap-1 flex-wrap">
+                            {agent.roles.slice(0, 3).map((role, idx) => (
+                              <RoleTag key={idx} role={role} />
+                            ))}
+                          </div>
+                          <span className="text-[9px] text-slate-400 ml-auto">{getStatusText(agent.status)}</span>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 // --- Modal Base Component ---
 export const Modal = ({ title, onClose, children, footer, size = 'default', zIndex = 'z-50', heightClass = 'h-[88vh] max-h-[88vh]' }) => {
@@ -446,6 +750,310 @@ export const TaskDetailModal = ({ task, onClose }) => {
                <CheckCircle2 size={12} /> 保存并重新下发
              </button>
            </div>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// --- Project Modal (Add/Edit Project) ---
+export const ProjectModal = ({ project, onClose, onSave }) => {
+  const isEdit = !!project;
+  const [formData, setFormData] = useState({
+    name: project?.name || '',
+    manager: project?.manager || '',
+    managerAgents: project?.managerAgents || [],
+    startDate: project?.startDate || '2026-03-01',
+    endDate: project?.endDate || '2026-04-30',
+    description: project?.description || ''
+  });
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    if (onSave) {
+      onSave({
+        ...project,
+        ...formData,
+        id: project?.id || `PROJ-${Date.now()}`,
+        status: project?.status || 'active'
+      });
+    }
+    onClose();
+  };
+
+  return (
+    <Modal
+      size="large"
+      zIndex="z-[60]"
+      title={
+        <div className="flex items-center gap-1.5">
+          <FolderOpen size={14} className="text-blue-600"/>
+          <span>{isEdit ? '编辑项目' : '新建项目'}</span>
+        </div>
+      }
+      onClose={onClose}
+      footer={
+        <>
+          <button onClick={onClose} className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
+            取消
+          </button>
+          <button onClick={handleSave} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+            保存
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+        <div className="grid grid-cols-2 gap-3 shrink-0">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-500">项目名称 <span className="text-rose-500">*</span></label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+              placeholder="请输入项目名称"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-500">负责人 (Agent) <span className="text-rose-500">*</span></label>
+            <AgentSelect
+              value={formData.managerAgents}
+              onChange={(agents) => handleChange('managerAgents', agents)}
+              placeholder="选择负责 Agent..."
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 shrink-0">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-500">开始日期</label>
+            <input
+              type="date"
+              value={formData.startDate}
+              onChange={(e) => handleChange('startDate', e.target.value)}
+              className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-500">结束日期</label>
+            <input
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => handleChange('endDate', e.target.value)}
+              className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1 shrink-0">
+          <label className="text-[10px] font-bold text-slate-500">项目描述</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => handleChange('description', e.target.value)}
+            className="w-full h-24 text-xs text-slate-800 bg-white border border-slate-200 rounded p-2.5 focus:outline-none focus:border-blue-400 resize-none custom-scrollbar shadow-sm"
+            placeholder="请输入项目描述..."
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// --- Module Modal (Add/Edit Module) ---
+export const ModuleModal = ({ module, onClose, onSave }) => {
+  const isEdit = !!module;
+  const [formData, setFormData] = useState({
+    title: module?.title || '',
+    docs: module?.docs || 0,
+    expanded: module?.expanded || true
+  });
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    if (onSave) {
+      onSave({
+        ...module,
+        ...formData,
+        id: module?.id || `MOD-${Date.now()}`,
+        children: module?.children || []
+      });
+    }
+    onClose();
+  };
+
+  return (
+    <Modal
+      size="large"
+      zIndex="z-[60]"
+      title={
+        <div className="flex items-center gap-1.5">
+          <Box size={14} className="text-indigo-600"/>
+          <span>{isEdit ? '编辑大纲模块' : '新增大纲模块'}</span>
+        </div>
+      }
+      onClose={onClose}
+      footer={
+        <>
+          <button onClick={onClose} className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
+            取消
+          </button>
+          <button onClick={handleSave} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+            保存
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+        <div className="flex flex-col gap-1 shrink-0">
+          <label className="text-[10px] font-bold text-slate-500">模块名称 <span className="text-rose-500">*</span></label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => handleChange('title', e.target.value)}
+            className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+            placeholder="请输入模块名称，例如：用户管理模块"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 shrink-0">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-500">附件数量</label>
+            <input
+              type="number"
+              min="0"
+              value={formData.docs}
+              onChange={(e) => handleChange('docs', parseInt(e.target.value) || 0)}
+              className="w-full text-xs font-mono font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-500">默认展开</label>
+            <select
+              value={formData.expanded ? 'true' : 'false'}
+              onChange={(e) => handleChange('expanded', e.target.value === 'true')}
+              className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+            >
+              <option value="true">是</option>
+              <option value="false">否</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 shrink-0">
+          <h4 className="text-[11px] font-bold text-indigo-700 mb-1.5 flex items-center gap-1.5">
+            <Box size={12} className="text-indigo-500"/> 模块说明
+          </h4>
+          <p className="text-[10px] text-indigo-600 leading-relaxed">
+            模块是需求大纲的顶级节点，用于组织和管理相关的功能点。每个模块下可以添加多个子功能，支持分配给不同的 Agent 进行研发。
+          </p>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// --- Feature Modal (Add/Edit Feature) ---
+export const FeatureModal = ({ feature, module, onClose, onSave }) => {
+  const isEdit = !!feature;
+  const [formData, setFormData] = useState({
+    title: feature?.title || '',
+    reqType: feature?.reqType || 'functional',
+    priority: feature?.priority || 'P1',
+    description: feature?.description || ''
+  });
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = () => {
+    if (onSave) {
+      onSave({
+        ...feature,
+        ...formData,
+        id: feature?.id || `FEAT-${Date.now()}`,
+        currentStep: feature?.currentStep || 0
+      });
+    }
+    onClose();
+  };
+
+  return (
+    <Modal
+      size="large"
+      zIndex="z-[60]"
+      title={
+        <div className="flex items-center gap-1.5">
+          <GitMerge size={14} className="text-cyan-600"/>
+          <span>{isEdit ? '编辑子功能' : '新增子功能'}</span>
+        </div>
+      }
+      onClose={onClose}
+      footer={
+        <>
+          <button onClick={onClose} className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
+            取消
+          </button>
+          <button onClick={handleSave} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+            保存
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
+        <div className="flex flex-col gap-1 shrink-0">
+          <label className="text-[10px] font-bold text-slate-500">功能名称 <span className="text-rose-500">*</span></label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => handleChange('title', e.target.value)}
+            className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+            placeholder="请输入功能名称"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 shrink-0">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-500">需求类型</label>
+            <ReqTypeSelect
+              value={formData.reqType}
+              onChange={(value) => handleChange('reqType', value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-slate-500">优先级</label>
+            <PrioritySelect
+              value={formData.priority}
+              onChange={(value) => handleChange('priority', value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1 shrink-0">
+          <label className="text-[10px] font-bold text-slate-500">所属模块</label>
+          <input
+            type="text"
+            value={module?.title || '-'}
+            disabled
+            className="w-full text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5 cursor-not-allowed shadow-sm"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 shrink-0 flex-1">
+          <label className="text-[10px] font-bold text-slate-500">功能描述</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => handleChange('description', e.target.value)}
+            className="w-full h-32 text-xs text-slate-800 bg-white border border-slate-200 rounded p-2.5 focus:outline-none focus:border-blue-400 resize-none custom-scrollbar shadow-sm"
+            placeholder="请输入功能详细描述..."
+          />
         </div>
       </div>
     </Modal>
