@@ -39,7 +39,7 @@
         <el-button @click="toggleTreeView" :icon="isTreeView ? 'List' : 'Grid'">
           {{ isTreeView ? '列表视图' : '树形视图' }}
         </el-button>
-        <el-button type="primary" @click="showCreateDialog('epic')">
+        <el-button type="primary" @click="openCreateDialog('epic')">
           <el-icon><Plus /></el-icon>
           新建大需求
         </el-button>
@@ -84,19 +84,23 @@
             <el-tag :type="getStatusType(row.status)" size="small">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="文档" width="120">
+        <el-table-column label="文档" width="100">
           <template #default="{ row }">
             <el-badge :value="row.document_ids?.length || 0" :max="99" type="info">
               <el-button link type="primary" @click="showDocuments(row)">文档</el-button>
             </el-badge>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showAddChild(row)">添加子需求</el-button>
-            <el-button link type="primary" @click="addTask(row)">添加任务</el-button>
-            <el-button link type="primary" @click="editRequirement(row)">编辑</el-button>
-            <el-button link type="danger" @click="deleteRequirement(row)">删除</el-button>
+            <el-button link type="primary" size="small" @click="showAddChild(row)">
+              添加{{ row.level === 'epic' ? '子需求' : '任务' }}
+            </el-button>
+            <el-button link type="primary" size="small" @click="addTask(row)">
+              关联任务
+            </el-button>
+            <el-button link type="primary" size="small" @click="editRequirement(row)">编辑</el-button>
+            <el-button link type="danger" size="small" @click="deleteRequirement(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -136,19 +140,23 @@
             <el-tag :type="getStatusType(row.status)" size="small">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="文档" width="120">
+        <el-table-column label="文档" width="100">
           <template #default="{ row }">
             <el-badge :value="row.document_ids?.length || 0" :max="99" type="info">
               <el-button link type="primary" @click="showDocuments(row)">文档</el-button>
             </el-badge>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="320" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="showAddChild(row)">添加子需求</el-button>
-            <el-button link type="primary" @click="addTask(row)">添加任务</el-button>
-            <el-button link type="primary" @click="editRequirement(row)">编辑</el-button>
-            <el-button link type="danger" @click="deleteRequirement(row)">删除</el-button>
+            <el-button link type="primary" size="small" @click="showAddChild(row)">
+              添加{{ row.level === 'epic' ? '子需求' : '任务' }}
+            </el-button>
+            <el-button link type="primary" size="small" @click="addTask(row)">
+              关联任务
+            </el-button>
+            <el-button link type="primary" size="small" @click="editRequirement(row)">编辑</el-button>
+            <el-button link type="danger" size="small" @click="deleteRequirement(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -191,11 +199,10 @@
             filterable
           >
             <el-option
-              v-for="item in epicOptions"
+              v-for="item in parentOptions"
               :key="item.id"
               :label="item.title"
               :value="item.id"
-              :disabled="item.level === 'task'"
             />
           </el-select>
         </el-form-item>
@@ -236,7 +243,7 @@
     </el-dialog>
 
     <!-- 文档关联对话框 -->
-    <el-dialog v-model="showDocDialog" title="关联文档" width="600px">
+    <el-dialog v-model="showDocDialog" title="关联文档" width="600px" @opened="fetchAvailableDocs">
       <div class="doc-list">
         <div v-if="currentRequirement?.document_ids?.length > 0" class="doc-items">
           <div
@@ -280,6 +287,46 @@
         </el-form>
       </div>
     </el-dialog>
+
+    <!-- 关联任务对话框 -->
+    <el-dialog v-model="showTaskDialog" title="关联任务" width="600px">
+      <div class="task-list">
+        <div v-if="linkedTasks?.length > 0" class="task-items">
+          <div
+            v-for="task in linkedTasks"
+            :key="task.id"
+            class="task-item"
+          >
+            <el-icon><Checked /></el-icon>
+            <span class="task-name">{{ task.title }}</span>
+            <el-tag size="small" :type="getTaskStatusType(task.status)">{{ getTaskStatusText(task.status) }}</el-tag>
+          </div>
+        </div>
+        <el-empty v-else description="暂无关联任务" />
+      </div>
+
+      <div class="add-task-section">
+        <el-divider>创建并关联任务</el-divider>
+        <el-form :inline="true">
+          <el-form-item label="任务标题">
+            <el-input v-model="newTask.title" placeholder="输入任务标题" style="width: 200px" />
+          </el-form-item>
+          <el-form-item label="任务类型">
+            <el-select v-model="newTask.type" placeholder="选择类型">
+              <el-option label="需求分析" value="requirement" />
+              <el-option label="UI 设计" value="ui" />
+              <el-option label="前端开发" value="frontend" />
+              <el-option label="后端开发" value="backend" />
+              <el-option label="测试" value="test" />
+              <el-option label="集成测试" value="integration" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="createAndLinkTask">创建并关联</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -287,9 +334,15 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getRequirements, createRequirement, updateRequirement, deleteRequirement } from '@/api/requirement'
+import {
+  getRequirements,
+  createRequirement,
+  updateRequirement,
+  deleteRequirement,
+  getRequirementTasks
+} from '@/api/requirement'
 import { getProjectDetail } from '@/api/project'
-import { getProjectTasks } from '@/api/project'
+import { createTask } from '@/api/task'
 
 const route = useRoute()
 
@@ -297,17 +350,23 @@ const loading = ref(false)
 const creating = ref(false)
 const showCreateDialogFlag = ref(false)
 const isEdit = ref(false)
-const isTreeView = ref(true) // 默认树形视图
+const isTreeView = ref(true)
 const requirements = ref([])
 const tableData = ref([])
 const project = ref({})
-const epicOptions = ref([])
+const parentOptions = ref([])
 const availableDocs = ref([])
 const currentRequirement = ref(null)
 const showDocDialog = ref(false)
+const showTaskDialog = ref(false)
+const linkedTasks = ref([])
 const newDoc = reactive({
   doc_id: '',
   type: 'requirement_design'
+})
+const newTask = reactive({
+  title: '',
+  type: 'frontend'
 })
 
 const filters = reactive({
@@ -362,12 +421,22 @@ const priorityMap = {
   P3: 'success'
 }
 
+const taskStatusMap = {
+  todo: { type: 'info', text: '待处理' },
+  in_progress: { type: 'warning', text: '进行中' },
+  blocked: { type: 'danger', text: '已阻塞' },
+  review: { type: 'primary', text: '评审中' },
+  completed: { type: 'success', text: '已完成' }
+}
+
 const getLevelText = (level) => levelMap[level]?.text || level
 const getLevelType = (level) => levelMap[level]?.type || 'info'
 const getTypeText = (type) => typeMap[type] || type
 const getStatusType = (status) => statusMap[status]?.type || 'info'
 const getStatusText = (status) => statusMap[status]?.text || status
 const getPriorityType = (priority) => priorityMap[priority] || 'info'
+const getTaskStatusType = (status) => taskStatusMap[status]?.type || 'info'
+const getTaskStatusText = (status) => taskStatusMap[status]?.text || status
 
 const getDocTypeText = (type) => {
   const docTypeMap = {
@@ -390,25 +459,15 @@ const fetchList = async () => {
     const res = await getRequirements(params)
     const data = res.data
 
-    if (data.tree) {
-      tableData.value = data.items
-    }
-    requirements.value = data.items
+    tableData.value = data.items || []
+    requirements.value = data.items || []
 
-    // 获取大需求选项
-    const epicRes = await getRequirements({ project_id: route.params.id, level: 'epic' })
-    epicOptions.value = epicRes.data.items || []
+    // 获取父级需求选项（用于创建子需求）
+    const allReqsRes = await getRequirements({ project_id: route.params.id })
+    parentOptions.value = allReqsRes.data.items || []
 
     const projectRes = await getProjectDetail(route.params.id)
     project.value = projectRes.data
-
-    // 获取可用文档列表
-    // TODO: 调用文档中心 API 获取文档
-    availableDocs.value = [
-      { id: 'doc1', name: '需求规格说明书.md' },
-      { id: 'doc2', name: '系统架构设计.pdf' },
-      { id: 'doc3', name: '接口设计文档.md' }
-    ]
   } catch (error) {
     console.error('获取需求列表失败:', error)
     ElMessage.error('获取需求列表失败')
@@ -431,9 +490,11 @@ const resetForm = () => {
   isEdit.value = false
 }
 
-const showCreateDialog = (level) => {
+const openCreateDialog = (level) => {
   isEdit.value = false
   form.level = level || 'epic'
+  form.parent_id = ''
+  form.epic_id = ''
   showCreateDialogFlag.value = true
 }
 
@@ -467,7 +528,6 @@ const handleSubmit = async () => {
       project_id: route.params.id
     }
 
-    // 如果是编辑
     if (isEdit.value && currentRequirement.value?.id) {
       await updateRequirement(currentRequirement.value.id, submitData)
       ElMessage.success('需求已更新')
@@ -491,13 +551,52 @@ const showAddChild = (row) => {
   const childLevel = row.level === 'epic' ? 'feature' : 'task'
   form.level = childLevel
   form.parent_id = row.id
-  form.epic_id = row.epic_id || row.id
+  form.epic_id = row.epic_id || (row.level === 'epic' ? row.id : row.epic_id)
+  form.title = ''
+  form.description = ''
+  form.type = 'new_feature'
+  form.priority = 'P2'
+  form.status = 'pending'
+  form.document_ids = []
   showCreateDialogFlag.value = true
 }
 
-const addTask = (row) => {
-  // TODO: 跳转到任务页面或打开任务创建对话框
-  ElMessage.info('添加任务功能开发中')
+const addTask = async (row) => {
+  currentRequirement.value = row
+  showTaskDialog.value = true
+  // 获取已关联的任务
+  try {
+    const res = await getRequirementTasks(row.id)
+    linkedTasks.value = res.data.items || []
+  } catch (error) {
+    console.error('获取任务列表失败:', error)
+    linkedTasks.value = []
+  }
+}
+
+const createAndLinkTask = async () => {
+  if (!newTask.title) {
+    ElMessage.warning('请输入任务标题')
+    return
+  }
+
+  try {
+    await createTask({
+      title: newTask.title,
+      type: newTask.type,
+      project_id: route.params.id,
+      requirement_id: currentRequirement.value.id,
+      status: 'todo'
+    })
+    ElMessage.success('任务创建并关联成功')
+    newTask.title = ''
+    // 刷新任务列表
+    const res = await getRequirementTasks(currentRequirement.value.id)
+    linkedTasks.value = res.data.items || []
+  } catch (error) {
+    console.error('创建任务失败:', error)
+    ElMessage.error('创建任务失败')
+  }
 }
 
 const deleteRequirement = async (row) => {
@@ -528,6 +627,15 @@ const showDocuments = (row) => {
   showDocDialog.value = true
 }
 
+const fetchAvailableDocs = async () => {
+  // TODO: 调用文档中心 API 获取文档
+  availableDocs.value = [
+    { id: 'doc1', name: '需求规格说明书.md' },
+    { id: 'doc2', name: '系统架构设计.pdf' },
+    { id: 'doc3', name: '接口设计文档.md' }
+  ]
+}
+
 const addDocument = () => {
   if (!newDoc.doc_id) {
     ElMessage.warning('请选择文档')
@@ -545,7 +653,6 @@ const addDocument = () => {
     currentRequirement.value.document_ids = []
   }
 
-  // 检查是否已存在
   const exists = currentRequirement.value.document_ids.some(
     d => d.doc_id === newDoc.doc_id && d.type === newDoc.type
   )
@@ -556,6 +663,7 @@ const addDocument = () => {
   }
 
   currentRequirement.value.document_ids.push(docData)
+  // TODO: 调用 API 保存文档关联
   ElMessage.success('文档已添加')
   newDoc.doc_id = ''
   newDoc.type = 'requirement_design'
@@ -565,6 +673,7 @@ const removeDocument = (docId) => {
   currentRequirement.value.document_ids = currentRequirement.value.document_ids.filter(
     d => d.doc_id !== docId
   )
+  // TODO: 调用 API 移除文档关联
   ElMessage.success('文档已移除')
 }
 
@@ -576,7 +685,6 @@ onMounted(() => {
 <style scoped>
 .requirement-list-page {
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: calc(100vh - 60px);
 }
 
@@ -628,17 +736,19 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.doc-list {
-  min-height: 200px;
+.doc-list, .task-list {
+  min-height: 150px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
-.doc-items {
+.doc-items, .task-items {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.doc-item {
+.doc-item, .task-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -648,17 +758,17 @@ onMounted(() => {
   transition: all 0.3s;
 }
 
-.doc-item:hover {
+.doc-item:hover, .task-item:hover {
   background: #eef1f6;
   transform: translateX(4px);
 }
 
-.doc-name {
+.doc-name, .task-name {
   flex: 1;
   font-weight: 500;
 }
 
-.add-doc-section {
+.add-doc-section, .add-task-section {
   margin-top: 20px;
   padding-top: 20px;
 }
@@ -712,10 +822,5 @@ onMounted(() => {
 
 :deep(.el-button--primary:hover) {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-}
-
-/* 展开/收起动画 */
-:deep(.el-table__expand-icon) {
-  transition: transform 0.3s ease;
 }
 </style>

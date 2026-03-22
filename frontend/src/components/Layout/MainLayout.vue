@@ -17,6 +17,7 @@
         background-color="transparent"
         text-color="#a0aec0"
         active-text-color="#667eea"
+        active-class="is-active-menu"
       >
         <el-menu-item index="/">
           <el-icon><House /></el-icon>
@@ -195,7 +196,7 @@ const handleCommand = async (command) => {
   background: rgba(102, 126, 234, 0.15) !important;
 }
 
-:deep(.el-menu-item.is-active) {
+:deep(.el-menu-item.is-active-menu) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   color: #fff !important;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
