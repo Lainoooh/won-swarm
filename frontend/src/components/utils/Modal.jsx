@@ -892,7 +892,8 @@ export const ModuleModal = ({ module, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     title: module?.title || '',
     docs: module?.docs || 0,
-    expanded: module?.expanded || true
+    expanded: module?.expanded || true,
+    type: 'module'
   });
 
   const handleChange = (field, value) => {
@@ -900,12 +901,14 @@ export const ModuleModal = ({ module, onClose, onSave }) => {
   };
 
   const handleSave = () => {
+    if (!formData.title) {
+      alert('请填写模块名称');
+      return;
+    }
     if (onSave) {
       onSave({
-        ...module,
         ...formData,
-        id: module?.id || `MOD-${Date.now()}`,
-        children: module?.children || []
+        parent_id: null
       });
     }
     onClose();

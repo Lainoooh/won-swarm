@@ -311,6 +311,17 @@ const AgentList = () => {
                    </div>
                 </div>
 
+                <div className="flex flex-wrap gap-1 justify-center mb-2">
+                  {ag.roles.length > 0 ? (
+                    ag.roles.slice(0, 2).map(r => <RoleTag key={r} role={r} />)
+                  ) : (
+                    <span className="text-[8px] text-slate-400 italic">未分配角色</span>
+                  )}
+                  {ag.roles.length > 2 && (
+                    <span className="text-[8px] text-slate-400 bg-slate-100 px-1 py-0.5 rounded flex items-center">+{ag.roles.length - 2}</span>
+                  )}
+                </div>
+
                 <div className="text-[9px] font-medium mb-2 flex-1">
                   {ag.status === 'busy' ? (
                     <div className="flex items-center justify-between bg-blue-50/50 border border-blue-100 p-1.5 rounded text-blue-700">
@@ -326,7 +337,6 @@ const AgentList = () => {
                 <div className="flex items-center justify-between pt-1 mt-auto border-t border-slate-100">
                    <span className="text-[8px] text-slate-400 font-mono bg-white border border-slate-100 shadow-sm px-1.5 py-0.5 rounded">{ag.id}</span>
                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <CopyIconBtn sk={ag.sk || 'sk_***'} />
                      <button onClick={() => setAgentModalState({ isOpen: true, agent: ag })} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-white hover:bg-indigo-50 rounded border border-transparent hover:border-indigo-200 transition-colors shadow-sm" title="编辑节点配置"><Edit size={12}/></button>
                      <button onClick={() => handleDelete(ag.id)} className="p-1.5 text-slate-400 hover:text-rose-600 bg-white hover:bg-rose-50 rounded border border-transparent hover:border-rose-200 transition-colors shadow-sm" title="删除"><X size={12}/></button>
                    </div>

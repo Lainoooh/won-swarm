@@ -128,7 +128,15 @@ const RequirementTree = () => {
 
   const handleSaveModule = async (moduleData) => {
     try {
-      await createRequirement(currentProject.id, { ...moduleData, project_id: currentProject.id });
+      await createRequirement(currentProject.id, {
+        type: 'module',
+        parent_id: null,
+        title: moduleData.title,
+        description: '',
+        docs_count: moduleData.docs || 0,
+        expanded: moduleData.expanded,
+        project_id: currentProject.id
+      });
       loadRequirements(currentProject.id);
       setShowModuleModal(false);
       setEditingModule(null);
