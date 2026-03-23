@@ -45,7 +45,7 @@ export const RoleTag = ({ role }) => {
     'analyst': { label: '分析师', color: 'text-lime-600 bg-lime-50 border-lime-200' },
   };
   const config = roleMap[role] || { label: role, color: 'text-slate-600 bg-slate-100 border-slate-200' };
-  return <span className={`px-1 py-0.5 text-[9px] uppercase rounded border font-medium ${config.color}`}>{config.label}</span>;
+  return <span className={`inline-flex items-center justify-center px-1 py-0.5 text-[9px] uppercase rounded border font-bold h-[18px] leading-none ${config.color}`}>{config.label}</span>;
 };
 
 // 优先级标签组件
