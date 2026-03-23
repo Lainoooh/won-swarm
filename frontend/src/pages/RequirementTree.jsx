@@ -74,6 +74,44 @@ const RequirementTree = () => {
     loadRequirements(p.id);
   };
 
+  // 处理创建需求
+  const handleCreateRequirement = async (data) => {
+    try {
+      // 首先创建模块（需求大纲）
+      const moduleRes = await createRequirement(currentProject.id, {
+        type: 'module',
+        parent_id: null,
+        title: data.title,
+        description: data.description,
+        docs_count: 0,
+        expanded: true,
+        project_id: currentProject.id
+      });
+
+      // 然后为每个功能创建子节点
+      if (data.features && data.features.length > 0) {
+        for (const feature of data.features) {
+          await createRequirement(currentProject.id, {
+            type: 'feature',
+            parent_id: moduleRes.id,
+            title: feature.title,
+            description: feature.description,
+            priority: feature.priority,
+            reqType: 'functional',
+            project_id: currentProject.id
+          });
+        }
+      }
+
+      // 刷新需求树
+      loadRequirements(currentProject.id);
+      setShowCreateReqModal(false);
+    } catch (error) {
+      alert('创建失败：' + error.message);
+      throw error;
+    }
+  };
+
   const toggleNode = (id) => setTreeData(treeData.map(node => node.id === id ? { ...node, expanded: !node.expanded } : node));
   const openFeatureModal = (feature) => setActiveFeature(feature);
 
@@ -416,7 +454,7 @@ const RequirementTree = () => {
 
       {activeFeature && <FeatureFlowModal feature={activeFeature} onClose={() => setActiveFeature(null)} tasks={[]} projectId={currentProject?.id} />}
       {activeAttachment && <AttachmentModal item={activeAttachment} onClose={() => setActiveAttachment(null)} />}
-      {showCreateReqModal && <CreateRequirementModal onClose={() => setShowCreateReqModal(false)} agents={agents} />}
+      {showCreateReqModal && <CreateRequirementModal onClose={() => setShowCreateReqModal(false)} onSave={handleCreateRequirement} agents={agents} />}
       {showModuleModal && (
         <ModuleModal
           module={editingModule}

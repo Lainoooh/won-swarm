@@ -394,11 +394,19 @@ export const AttachmentModal = ({ item, onClose }) => {
 };
 
 // --- Create Requirement Modal (3-Step Wizard) ---
-export const CreateRequirementModal = ({ onClose, agents = [] }) => {
+export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
   const [step, setStep] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState('');
   const [agentList, setAgentList] = useState(agents);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 存储表单数据
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    features: []
+  });
 
   React.useEffect(() => {
     // 使用传入的 agents
@@ -429,6 +437,36 @@ export const CreateRequirementModal = ({ onClose, agents = [] }) => {
       setIsAnalyzing(false);
       setAnalysisResult("### 需求分析报告\n\n根据您提供的 Prompt，已为您提炼以下核心方向：\n\n1. **技术栈要求**：需要基于 React + Tailwind CSS 构建。\n2. **交互重点**：必须包含极速的响应式体验与暗色/亮色切换可能。\n3. **拆解建议**：建议将基础架构与业务模块分步迭代...");
     }, 1500);
+  };
+
+  // 处理创建需求
+  const handleCreateRequirement = async () => {
+    if (!formData.title) {
+      alert('请输入需求名称');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // 调用 onSave 回调，传入完整的需求数据
+      if (onSave) {
+        await onSave({
+          title: formData.title,
+          description: formData.description,
+          features: features.filter(f => selectedFeatureIds.has(f.id)).map(f => ({
+            title: f.name,
+            priority: f.priority,
+            description: f.desc,
+            phase_assignments: phaseAssignments
+          }))
+        });
+      }
+      onClose();
+    } catch (error) {
+      alert('创建失败：' + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const addFeature = () => setFeatures([...features, { id: Date.now(), name: '', priority: 'P2', desc: '', isEditing: true }]);
@@ -477,11 +515,22 @@ export const CreateRequirementModal = ({ onClose, agents = [] }) => {
             <div className="w-1/2 flex flex-col gap-3 bg-white/60 p-3 rounded-lg border border-slate-200/60 shadow-sm">
                <div className="flex flex-col gap-1">
                  <label className="text-[10px] font-bold text-slate-500">需求名称</label>
-                 <input type="text" className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400" placeholder="例如：新版工作台重构..." />
+                 <input
+                   type="text"
+                   value={formData.title}
+                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                   className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400"
+                   placeholder="例如：新版工作台重构..."
+                 />
                </div>
                <div className="flex flex-col gap-1 flex-1">
                  <label className="text-[10px] font-bold text-slate-500">需求描述 Prompt</label>
-                 <textarea className="w-full flex-1 text-xs text-slate-800 bg-white border border-slate-200 rounded p-2.5 focus:outline-none focus:border-blue-400 resize-none custom-scrollbar" placeholder="详细描述该需求的背景、目标与约束..."></textarea>
+                 <textarea
+                   value={formData.description}
+                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                   className="w-full flex-1 text-xs text-slate-800 bg-white border border-slate-200 rounded p-2.5 focus:outline-none focus:border-blue-400 resize-none custom-scrollbar"
+                   placeholder="详细描述该需求的背景、目标与约束..."
+                 ></textarea>
                </div>
                <div className="flex items-center gap-2 mt-auto">
                  <div className="flex flex-col gap-1 flex-1">
@@ -663,14 +712,17 @@ export const CreateRequirementModal = ({ onClose, agents = [] }) => {
            <button
              onClick={() => step > 1 ? setStep(step - 1) : onClose()}
              className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-lg transition-colors"
+             disabled={isSubmitting}
            >
              {step > 1 ? '上一步' : '取消'}
            </button>
            <button
-             onClick={() => step < 3 ? setStep(step + 1) : onClose()}
-             className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1 transition-colors"
+             onClick={() => step < 3 ? setStep(step + 1) : handleCreateRequirement()}
+             className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+             disabled={isSubmitting}
            >
-             {step < 3 ? '下一步' : '完成分配并创建大纲'} {step < 3 && <ChevronRight size={14}/>}
+             {isSubmitting ? <CheckCircle2 size={14} className="animate-spin"/> : step < 3 ? <ChevronRight size={14}/> : null}
+             {step < 3 ? '下一步' : isSubmitting ? '创建中...' : '完成分配并创建大纲'}
            </button>
         </div>
       </div>
