@@ -35,10 +35,7 @@ const AgentFormModal = ({ agent, onClose, onSave }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: agent?.name || '',
-    worker_sk: agent?.sk || '',
     roles: agent?.roles || [],
-    capabilities: agent?.capabilities || [],
-    model: agent?.model || 'claude-sonnet-4-6',
   });
   const [selectedRoles, setSelectedRoles] = useState(agent?.roles || []);
   const [isRolesOpen, setIsRolesOpen] = useState(false);
@@ -60,13 +57,18 @@ const AgentFormModal = ({ agent, onClose, onSave }) => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.worker_sk) {
+    if (!formData.name || selectedRoles.length === 0) {
       alert('请填写必填项');
       return;
     }
     setLoading(true);
     try {
-      const data = { ...formData, roles: selectedRoles };
+      const data = {
+        name: formData.name,
+        roles: selectedRoles,
+        worker_sk: `sk_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`,
+        model: 'claude-sonnet-4-6',
+      };
       if (isEdit) {
         await updateAgent(agent.id, data);
       } else {
@@ -82,7 +84,7 @@ const AgentFormModal = ({ agent, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] animate-in fade-in duration-200 px-4" onClick={onClose}>
-      <div className="bg-white/95 backdrop-blur-2xl border border-white/60 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 w-[550px] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white/95 backdrop-blur-2xl border border-white/60 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 w-[450px]" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-2.5 border-b border-white/40 bg-white/40 shrink-0">
           <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800">
             {isEdit ? <Edit size={16} className="text-blue-600"/> : <Plus size={16} className="text-blue-600"/>}
@@ -134,28 +136,10 @@ const AgentFormModal = ({ agent, onClose, onSave }) => {
               )}
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-slate-600">Worker SK <span className="text-rose-500">*</span></label>
-              <input
-                type="text"
-                value={formData.worker_sk}
-                onChange={(e) => setFormData({...formData, worker_sk: e.target.value})}
-                className="w-full text-xs font-mono text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-400 shadow-sm transition-colors"
-                placeholder="sk_xxxxx"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-slate-600">AI 模型</label>
-              <select
-                value={formData.model}
-                onChange={(e) => setFormData({...formData, model: e.target.value})}
-                className="w-full text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-400 shadow-sm transition-colors"
-              >
-                <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-                <option value="claude-opus-4-6">Claude Opus 4.6</option>
-                <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
-              </select>
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mt-2">
+              <p className="text-[10px] text-blue-700 leading-relaxed">
+                <strong>说明：</strong>新增 Agent 时系统将自动生成 Worker SK 和默认模型配置。如需修改高级配置，请在创建后点击编辑按钮进行修改。
+              </p>
             </div>
           </div>
         </div>

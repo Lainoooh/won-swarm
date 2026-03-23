@@ -89,6 +89,11 @@ async def get_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
 
 @router.post("", response_model=AgentSchema)
 async def create_agent(data: AgentCreateSchema, db: AsyncSession = Depends(get_db)):
+    # 如果没有传入 worker_sk，自动生成一个
+    if not data.worker_sk:
+        import secrets
+        data.worker_sk = f"sk_{secrets.token_hex(8)}"
+
     sk_hash = hash_sk(data.worker_sk)
     existing = await db.execute(select(Agent).where(Agent.worker_sk_hash == sk_hash))
     if existing.scalar_one_or_none():
@@ -102,7 +107,7 @@ async def create_agent(data: AgentCreateSchema, db: AsyncSession = Depends(get_d
         platform_ak_hash=hash_sk(data.platform_ak) if data.platform_ak else None,
         worker_sk_hash=sk_hash,
         roles=data.roles,
-        capabilities=data.capabilities,
+        capabilities=data.capabilities or [],
         model=data.model,
         status="offline",
         tokens=0,

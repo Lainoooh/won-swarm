@@ -6,10 +6,10 @@ from datetime import datetime
 class AgentCreateSchema(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     platform_ak: Optional[str] = None
-    worker_sk: str = Field(..., min_length=10)
+    worker_sk: Optional[str] = None
     roles: List[str] = Field(default_factory=list)
-    capabilities: List[str] = Field(default_factory=list)
-    model: str = Field(..., min_length=1)
+    capabilities: Optional[List[str]] = None
+    model: str = Field(default='claude-sonnet-4-6')
 
 
 class AgentUpdateSchema(BaseModel):
