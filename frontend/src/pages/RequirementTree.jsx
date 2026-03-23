@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   FolderOpen, Search, Calendar, Cpu, Plus,
   ChevronDown, Box, Paperclip, GitMerge, Users,
-  PauseCircle, SkipForward, Ban, Edit, Trash2
+  PauseCircle, SkipForward, Ban, Edit, Trash2, RefreshCw
 } from 'lucide-react';
 import { StatusBadge, PriorityTag, ReqTypeTag } from '../components/utils/Tags';
 import { FeatureFlowModal, AttachmentModal, CreateRequirementModal, ModuleModal, FeatureModal, ConfirmModal } from '../components/utils/Modal';
-import { mockProjects, mockReqTree } from '../data/mockData';
+import { getProjects, getRequirementsTree, createRequirement, updateRequirement, deleteRequirement, requirementAction } from '../api';
 
 const RequirementTree = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [treeData, setTreeData] = useState(mockReqTree);
+  const [treeData, setTreeData] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeFeature, setActiveFeature] = useState(null);
   const [activeAttachment, setActiveAttachment] = useState(null);
   const [showCreateReqModal, setShowCreateReqModal] = useState(false);
@@ -23,17 +25,48 @@ const RequirementTree = () => {
   const [editingModule, setEditingModule] = useState(null);
   const [editingFeature, setEditingFeature] = useState(null);
   const [currentModule, setCurrentModule] = useState(null);
+  const [currentProject, setCurrentProject] = useState(null);
 
   // 确认弹窗状态
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState({});
 
-  // Find current project from mock data
-  const project = mockProjects.find(p => p.id === projectId) || mockProjects[0];
-  const projects = mockProjects;
+  const loadProjects = useCallback(async () => {
+    try {
+      const res = await getProjects({ page: 1, page_size: 100 });
+      const projList = res.items || [];
+      setProjects(projList);
+      const proj = projList.find(p => p.id === projectId) || projList[0];
+      setCurrentProject(proj);
+      if (proj) {
+        loadRequirements(proj.id);
+      }
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    }
+  }, [projectId]);
+
+  const loadRequirements = useCallback(async (pid) => {
+    setLoading(true);
+    try {
+      const res = await getRequirementsTree(pid);
+      setTreeData(res.items || []);
+    } catch (error) {
+      console.error('Failed to load requirements:', error);
+      setTreeData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
   const handleProjectChange = (p) => {
     navigate(`/projects/${p.id}`);
+    setCurrentProject(p);
+    loadRequirements(p.id);
   };
 
   const toggleNode = (id) => setTreeData(treeData.map(node => node.id === id ? { ...node, expanded: !node.expanded } : node));
@@ -77,16 +110,25 @@ const RequirementTree = () => {
       title: '删除模块确认',
       message: `确定要删除模块"${module.title}"吗？删除后该模块下的所有子功能也将被删除，此操作不可恢复。`,
       confirmText: '确认删除',
-      onConfirm: () => console.log('Delete module:', module.id)
+      onConfirm: async () => {
+        try {
+          await deleteRequirement(module.id);
+          loadRequirements(currentProject.id);
+        } catch (error) {
+          alert('删除失败：' + error.message);
+        }
+      }
     });
   };
 
-  const handleSaveModule = (moduleData) => {
-    console.log('Save module:', moduleData);
-    if (editingModule) {
-      setTreeData(treeData.map(m => m.id === moduleData.id ? moduleData : m));
-    } else {
-      setTreeData([...treeData, moduleData]);
+  const handleSaveModule = async (moduleData) => {
+    try {
+      await createRequirement(currentProject.id, { ...moduleData, project_id: currentProject.id });
+      loadRequirements(currentProject.id);
+      setShowModuleModal(false);
+      setEditingModule(null);
+    } catch (error) {
+      alert('保存失败：' + error.message);
     }
   };
 
@@ -112,15 +154,31 @@ const RequirementTree = () => {
       title: '删除功能确认',
       message: `确定要删除功能"${feature.title}"吗？删除后将无法恢复。`,
       confirmText: '确认删除',
-      onConfirm: () => console.log('Delete feature:', feature.id)
+      onConfirm: async () => {
+        try {
+          await deleteRequirement(feature.id);
+          loadRequirements(currentProject.id);
+        } catch (error) {
+          alert('删除失败：' + error.message);
+        }
+      }
     });
   };
 
-  const handleSaveFeature = (featureData) => {
-    console.log('Save feature:', featureData);
-    setShowFeatureModal(false);
-    setCurrentModule(null);
-    setEditingFeature(null);
+  const handleSaveFeature = async (featureData) => {
+    try {
+      if (editingFeature) {
+        await updateRequirement(editingFeature.id, featureData);
+      } else {
+        await createRequirement(currentProject.id, { ...featureData, project_id: currentProject.id, parent_id: currentModule.id, type: 'feature' });
+      }
+      loadRequirements(currentProject.id);
+      setShowFeatureModal(false);
+      setCurrentModule(null);
+      setEditingFeature(null);
+    } catch (error) {
+      alert('保存失败：' + error.message);
+    }
   };
 
   // Feature action buttons
@@ -134,7 +192,14 @@ const RequirementTree = () => {
       title: '取消流程确认',
       message: `确定要取消功能"${feature.title}"的流程吗？取消后该功能将被标记为已取消状态。`,
       confirmText: '确认取消',
-      onConfirm: () => console.log('Cancel feature:', feature.id)
+      onConfirm: async () => {
+        try {
+          await requirementAction(feature.id, 'cancel');
+          loadRequirements(currentProject.id);
+        } catch (error) {
+          alert('操作失败：' + error.message);
+        }
+      }
     });
   };
 
@@ -144,7 +209,14 @@ const RequirementTree = () => {
       title: '叫停流程确认',
       message: `确定要叫停功能"${feature.title}"吗？叫停后该功能将暂停执行，直到重新激活。`,
       confirmText: '确认叫停',
-      onConfirm: () => console.log('Pause feature:', feature.id)
+      onConfirm: async () => {
+        try {
+          await requirementAction(feature.id, 'pause');
+          loadRequirements(currentProject.id);
+        } catch (error) {
+          alert('操作失败：' + error.message);
+        }
+      }
     });
   };
 
@@ -154,7 +226,14 @@ const RequirementTree = () => {
       title: '推进流程确认',
       message: `确定要将功能"${feature.title}"推进到下一阶段吗？`,
       confirmText: '确认推进',
-      onConfirm: () => console.log('Advance feature:', feature.id)
+      onConfirm: async () => {
+        try {
+          await requirementAction(feature.id, 'advance');
+          loadRequirements(currentProject.id);
+        } catch (error) {
+          alert('操作失败：' + error.message);
+        }
+      }
     });
   };
 
@@ -176,7 +255,7 @@ const RequirementTree = () => {
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
           {projects.map(p => {
-            const isActive = p.id === project.id;
+            const isActive = p.id === currentProject?.id;
             return (
               <div
                 key={p.id}
@@ -193,7 +272,7 @@ const RequirementTree = () => {
         </div>
 
         <div className="p-1.5 border-t border-white/40 bg-white/30 flex justify-between items-center text-[9px] text-slate-500 shrink-0">
-           <span>共 {projects.length} 项 (10/页)</span>
+           <span>共 {projects.length} 项</span>
            <div className="flex items-center gap-0.5">
              <button className="p-0.5 hover:bg-white rounded"><ChevronDown size={10} className="rotate-90"/></button>
              <span className="px-0.5">1/1</span>
@@ -207,23 +286,25 @@ const RequirementTree = () => {
         <div className="p-2 border-b border-white/40 flex justify-between items-center bg-white/40 shrink-0">
           <div className="flex flex-col">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-black text-slate-800">{project.name} <span className="text-slate-500 font-normal">需求大纲</span></span>
+              <span className="text-xs font-black text-slate-800">{currentProject?.name || '加载中...'} <span className="text-slate-500 font-normal">需求大纲</span></span>
+              {currentProject && (
               <div className="flex flex-wrap items-center gap-1.5 ml-1 bg-white/60 border border-white/80 px-1.5 py-0.5 rounded shadow-sm text-[9px] font-medium text-slate-600">
-                 <span className="flex items-center gap-0.5"><Cpu size={9} className="text-blue-500"/> {project.manager}</span>
+                 <span className="flex items-center gap-0.5"><Cpu size={9} className="text-blue-500"/> {currentProject.manager_name}</span>
                  <div className="w-px h-2 bg-slate-300"></div>
-                 <span className="flex items-center gap-0.5"><Calendar size={9} className="text-slate-400"/> {project.startDate} 至 {project.endDate}</span>
+                 <span className="flex items-center gap-0.5"><Calendar size={9} className="text-slate-400"/> {currentProject.start_date} 至 {currentProject.end_date}</span>
                  <div className="w-px h-2 bg-slate-300"></div>
-                 <span>需：<span className="font-bold text-slate-800">{project.reqCount}</span></span>
-                 <span>任：<span className="font-bold text-slate-800">{project.taskCount}</span></span>
+                 <span>需：<span className="font-bold text-slate-800">{currentProject.req_count}</span></span>
+                 <span>任：<span className="font-bold text-slate-800">{currentProject.task_count}</span></span>
                  <div className="w-px h-2 bg-slate-300"></div>
                  <span className="flex items-center gap-1">
                    进度:
                    <div className="w-8 h-1 bg-slate-200/50 rounded-full overflow-hidden shadow-inner">
-                     <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{width: `${project.progress}%`}}></div>
+                     <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500" style={{width: `${currentProject.progress}%`}}></div>
                    </div>
-                   <span className="font-bold text-slate-800">{project.progress}%</span>
+                   <span className="font-bold text-slate-800">{currentProject.progress}%</span>
                  </span>
               </div>
+              )}
             </div>
           </div>
           <button onClick={() => setShowCreateReqModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] px-2.5 py-1 rounded-md flex items-center gap-1 font-medium shadow-sm shrink-0 transition-colors">
@@ -247,7 +328,16 @@ const RequirementTree = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 py-1 min-h-0">
-              {treeData.map(module => (
+              {loading ? (
+                <div className="flex items-center justify-center py-8 text-slate-400">
+                  <RefreshCw size={20} className="animate-spin inline mr-2"/> 加载需求树...
+                </div>
+              ) : treeData.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-slate-400">
+                  暂无需求数据
+                </div>
+              ) : (
+              treeData.map(module => (
                 <div key={module.id} className="mb-2 border-b border-slate-200/50 pb-2 last:border-0">
 
                   {/* Module Row (需求大纲行) */}
@@ -322,6 +412,7 @@ const RequirementTree = () => {
             setEditingModule(null);
           }}
           onSave={handleSaveModule}
+          projectId={currentProject?.id}
         />
       )}
       {showFeatureModal && (
@@ -334,6 +425,7 @@ const RequirementTree = () => {
             setCurrentModule(null);
           }}
           onSave={handleSaveFeature}
+          projectId={currentProject?.id}
         />
       )}
       {showConfirm && (

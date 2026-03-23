@@ -184,9 +184,12 @@ export const PrioritySelect = ({ value, onChange, placeholder = '选择优先级
 };
 
 // --- Agent Select Dropdown Component (Multi-select with search) ---
-export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent...' }) => {
+export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent...', agents = [] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // 如果没有传入 agents，使用 mockAgents 作为默认值
+  const agentList = agents.length > 0 ? agents : mockAgents;
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -208,7 +211,7 @@ export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent.
     }
   };
 
-  const filteredAgents = mockAgents.filter(agent => {
+  const filteredAgents = agentList.filter(agent => {
     const searchLower = searchTerm.toLowerCase();
     return agent.name.toLowerCase().includes(searchLower) ||
            agent.roles.some(r => r.toLowerCase().includes(searchLower)) ||
@@ -757,14 +760,14 @@ export const TaskDetailModal = ({ task, onClose }) => {
 };
 
 // --- Project Modal (Add/Edit Project) ---
-export const ProjectModal = ({ project, onClose, onSave }) => {
+export const ProjectModal = ({ project, agents = [], onClose, onSave }) => {
   const isEdit = !!project;
   const [formData, setFormData] = useState({
     name: project?.name || '',
-    manager: project?.manager || '',
-    managerAgents: project?.managerAgents || [],
-    startDate: project?.startDate || '2026-03-01',
-    endDate: project?.endDate || '2026-04-30',
+    manager_id: project?.manager_id || '',
+    manager_name: project?.manager_name || '',
+    start_date: project?.start_date || project?.startDate || '2026-03-01',
+    end_date: project?.end_date || project?.endDate || '2026-04-30',
     description: project?.description || ''
   });
 
@@ -773,16 +776,25 @@ export const ProjectModal = ({ project, onClose, onSave }) => {
   };
 
   const handleSave = () => {
+    if (!formData.name || !formData.manager_id) {
+      alert('请填写必填项');
+      return;
+    }
     if (onSave) {
       onSave({
-        ...project,
-        ...formData,
-        id: project?.id || `PROJ-${Date.now()}`,
-        status: project?.status || 'active'
+        name: formData.name,
+        manager_id: formData.manager_id,
+        manager_name: formData.manager_name,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        description: formData.description
       });
     }
     onClose();
   };
+
+  // 找到选中的 agent
+  const selectedAgent = agents.find(a => a.id === formData.manager_id);
 
   return (
     <Modal
@@ -821,9 +833,15 @@ export const ProjectModal = ({ project, onClose, onSave }) => {
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-bold text-slate-500">负责人 (Agent) <span className="text-rose-500">*</span></label>
             <AgentSelect
-              value={formData.managerAgents}
-              onChange={(agents) => handleChange('managerAgents', agents)}
+              value={formData.manager_id ? [formData.manager_id] : []}
+              onChange={(agentIds) => {
+                const agentId = agentIds[0] || '';
+                const agent = agents.find(a => a.id === agentId);
+                handleChange('manager_id', agentId);
+                handleChange('manager_name', agent ? agent.name : '');
+              }}
               placeholder="选择负责 Agent..."
+              agents={agents}
             />
           </div>
         </div>
@@ -833,8 +851,8 @@ export const ProjectModal = ({ project, onClose, onSave }) => {
             <label className="text-[10px] font-bold text-slate-500">开始日期</label>
             <input
               type="date"
-              value={formData.startDate}
-              onChange={(e) => handleChange('startDate', e.target.value)}
+              value={formData.start_date}
+              onChange={(e) => handleChange('start_date', e.target.value)}
               className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
             />
           </div>
@@ -842,8 +860,8 @@ export const ProjectModal = ({ project, onClose, onSave }) => {
             <label className="text-[10px] font-bold text-slate-500">结束日期</label>
             <input
               type="date"
-              value={formData.endDate}
-              onChange={(e) => handleChange('endDate', e.target.value)}
+              value={formData.end_date}
+              onChange={(e) => handleChange('end_date', e.target.value)}
               className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
             />
           </div>

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search, Plus, Settings, Square, CheckCircle2, X, Cpu, BrainCircuit, Gem,
-  LayoutGrid, List, Copy, Check, Edit, Terminal, ChevronDown
+  LayoutGrid, List, Copy, Check, Edit, Terminal, ChevronDown, RefreshCw
 } from 'lucide-react';
 import { StatusBadge, RoleTag } from '../components/utils/Tags';
-import { mockAgents } from '../data/mockData';
+import { getAgents, createAgent, updateAgent, deleteAgent, stopAgent as apiStopAgent } from '../api';
 
 // --- 数字格式化 ---
 const formatNumber = (num) => {
@@ -30,8 +30,16 @@ const CopyIconBtn = ({ sk }) => {
 };
 
 // --- AgentFormModal 组件 ---
-const AgentFormModal = ({ agent, onClose }) => {
+const AgentFormModal = ({ agent, onClose, onSave }) => {
   const isEdit = !!agent;
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: agent?.name || '',
+    worker_sk: agent?.sk || '',
+    roles: agent?.roles || [],
+    capabilities: agent?.capabilities || [],
+    model: agent?.model || 'claude-sonnet-4-6',
+  });
   const [selectedRoles, setSelectedRoles] = useState(agent?.roles || []);
   const [isRolesOpen, setIsRolesOpen] = useState(false);
 
@@ -41,11 +49,35 @@ const AgentFormModal = ({ agent, onClose }) => {
     { value: 'frontend-developer', label: '前端研发 (Frontend Dev)' },
     { value: 'backend-developer', label: '后端研发 (Backend Dev)' },
     { value: 'qa-engineer', label: '测试工程 (QA Engineer)' },
-    { value: 'ui-designer', label: 'UI 设计 (UI Designer)' }
+    { value: 'ui-designer', label: 'UI 设计 (UI Designer)' },
+    { value: 'architect', label: '架构师 (Architect)' },
+    { value: 'tech-lead', label: '技术主管 (Tech Lead)' },
+    { value: 'analyst', label: '分析师 (Analyst)' },
   ];
 
   const toggleRole = (val) => {
     setSelectedRoles(prev => prev.includes(val) ? prev.filter(r => r !== val) : [...prev, val]);
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.worker_sk) {
+      alert('请填写必填项');
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = { ...formData, roles: selectedRoles };
+      if (isEdit) {
+        await updateAgent(agent.id, data);
+      } else {
+        await createAgent(data);
+      }
+      onSave();
+    } catch (error) {
+      alert('操作失败：' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,7 +94,13 @@ const AgentFormModal = ({ agent, onClose }) => {
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-slate-600">Agent 名称 <span className="text-rose-500">*</span></label>
-              <input type="text" defaultValue={agent?.name || ''} className="w-full text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-400 shadow-sm transition-colors" placeholder="例如：PC3-高级架构师" />
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="w-full text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-400 shadow-sm transition-colors"
+                placeholder="例如：PC3-高级架构师"
+              />
             </div>
 
             <div className="flex flex-col gap-2 relative">
@@ -98,13 +136,34 @@ const AgentFormModal = ({ agent, onClose }) => {
 
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold text-slate-600">Worker SK <span className="text-rose-500">*</span></label>
-              <input type="text" defaultValue={agent?.sk || ''} className="w-full text-xs font-mono text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-400 shadow-sm transition-colors" placeholder="worker_sk_xxxxx" />
+              <input
+                type="text"
+                value={formData.worker_sk}
+                onChange={(e) => setFormData({...formData, worker_sk: e.target.value})}
+                className="w-full text-xs font-mono text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-400 shadow-sm transition-colors"
+                placeholder="sk_xxxxx"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-slate-600">AI 模型</label>
+              <select
+                value={formData.model}
+                onChange={(e) => setFormData({...formData, model: e.target.value})}
+                className="w-full text-sm font-bold text-slate-800 bg-white border border-slate-200 rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-400 shadow-sm transition-colors"
+              >
+                <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+                <option value="claude-opus-4-6">Claude Opus 4.6</option>
+                <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+              </select>
             </div>
           </div>
         </div>
         <div className="flex items-center justify-end gap-3 p-2.5 border-t border-white/40 bg-white/40 shrink-0">
-          <button onClick={onClose} className="px-4 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors">取消</button>
-          <button onClick={onClose} className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors flex items-center gap-1.5"><CheckCircle2 size={14}/> {isEdit ? '保存修改' : '确认创建'}</button>
+          <button onClick={onClose} disabled={loading} className="px-4 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors disabled:opacity-50">取消</button>
+          <button onClick={handleSubmit} disabled={loading} className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50">
+            <CheckCircle2 size={14}/> {loading ? '保存中...' : (isEdit ? '保存修改' : '确认创建')}
+          </button>
         </div>
       </div>
     </div>
@@ -114,42 +173,69 @@ const AgentFormModal = ({ agent, onClose }) => {
 // --- 主组件 ---
 const AgentList = () => {
   const [agentModalState, setAgentModalState] = useState({ isOpen: false, agent: null });
-  const [viewMode, setViewMode] = useState('list'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('全部状态');
-
-  // Pagination State
+  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
   const itemsPerPage = 20;
 
-  const [stoppedAgents, setStoppedAgents] = useState(new Set());
+  const loadAgents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = { page: currentPage, page_size: itemsPerPage };
+      if (statusFilter !== 'all') params.status = statusFilter;
+      if (searchQuery) params.search = searchQuery;
 
-  const filteredAgents = mockAgents.filter(ag => {
+      const res = await getAgents(params);
+      setAgents(res.items || []);
+      setTotal(res.total || 0);
+    } catch (error) {
+      console.error('Failed to load agents:', error);
+      setAgents([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, statusFilter, searchQuery]);
+
+  useEffect(() => {
+    loadAgents();
+  }, [loadAgents]);
+
+  const handleSave = () => {
+    setAgentModalState({ isOpen: false, agent: null });
+    loadAgents();
+  };
+
+  const handleDelete = async (agentId) => {
+    if (!confirm('确定要删除此 Agent 吗？此操作不可恢复。')) return;
+    try {
+      await deleteAgent(agentId);
+      loadAgents();
+    } catch (error) {
+      alert('删除失败：' + error.message);
+    }
+  };
+
+  const handleStopAgent = async (agentId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'offline' ? 'idle' : 'offline';
+      await apiStopAgent(agentId, currentStatus !== 'offline');
+      loadAgents();
+    } catch (error) {
+      alert('操作失败：' + error.message);
+    }
+  };
+
+  const filteredAgents = agents.filter(ag => {
     const matchSearch = ag.name.toLowerCase().includes(searchQuery.toLowerCase()) || ag.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchStatus = statusFilter === '全部状态' ||
-                        (statusFilter === '在线' && ag.status === 'online') ||
-                        (statusFilter === '空闲' && ag.status === 'idle') ||
-                        (statusFilter === '忙碌' && ag.status === 'busy') ||
-                        (statusFilter === '离线' && ag.status === 'offline');
+    const matchStatus = statusFilter === 'all' || ag.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
-  const totalPages = Math.ceil(filteredAgents.length / itemsPerPage);
-  const currentAgents = filteredAgents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const handleStopAgent = (agentId) => {
-    const newSet = new Set(stoppedAgents);
-    if (newSet.has(agentId)) {
-      newSet.delete(agentId);
-    } else {
-      newSet.add(agentId);
-    }
-    setStoppedAgents(newSet);
-  };
-
-  const handleSettings = (agentId) => {
-    console.log('Settings for agent:', agentId);
-  };
+  const totalPages = Math.ceil(total / itemsPerPage);
 
   return (
     <div className="bg-white/70 border border-white/60 rounded-xl flex flex-col flex-1 overflow-hidden shadow-sm m-2">
@@ -171,11 +257,18 @@ const AgentList = () => {
             onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}
             className="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-3 py-2 shadow-sm focus:outline-none focus:border-blue-400 cursor-pointer transition-colors"
           >
-            <option>全部状态</option><option>在线</option><option>空闲</option><option>忙碌</option><option>离线</option>
+            <option value="all">全部状态</option>
+            <option value="online">在线</option>
+            <option value="idle">空闲</option>
+            <option value="busy">忙碌</option>
+            <option value="offline">离线</option>
           </select>
         </div>
 
         <div className="flex items-center gap-3">
+          <button onClick={loadAgents} className="p-2 text-slate-400 hover:text-blue-600 transition-colors" title="刷新">
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          </button>
           <div className="flex items-center bg-slate-100/80 border border-slate-200 p-0.5 rounded-lg shadow-inner">
             <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`} title="模块视图">
               <LayoutGrid size={14} />
@@ -193,16 +286,18 @@ const AgentList = () => {
 
       {/* 内容展示区 */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 bg-slate-50/30 flex flex-col">
-        {filteredAgents.length === 0 ? (
+        {loading ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 font-bold text-sm gap-2">
+            <RefreshCw size={32} className="animate-spin"/> 加载中...
+          </div>
+        ) : filteredAgents.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 font-bold text-sm gap-2">
             <Terminal size={32} className="opacity-20"/> 未匹配到任何 Agent
           </div>
         ) : viewMode === 'grid' ? (
-          // --- 卡片视图 ---
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 flex-1 content-start">
-            {currentAgents.map(ag => (
+            {filteredAgents.map(ag => (
               <div key={ag.id} className="bg-white border border-slate-200 hover:border-blue-300 rounded-xl p-2.5 shadow-sm hover:shadow-md transition-all flex flex-col relative group min-h-[135px]">
-                {/* Header */}
                 <div className="flex justify-between items-start mb-2.5">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-500 border border-blue-100 flex items-center justify-center shrink-0 shadow-sm">
@@ -218,49 +313,44 @@ const AgentList = () => {
                   </div>
                 </div>
 
-                {/* Tokens vs 鳞石 */}
                 <div className="grid grid-cols-2 gap-2 mb-2.5">
                    <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-100 rounded-lg py-1.5 shadow-sm">
-                     <span className="text-[8px] font-bold text-slate-400 mb-0.5">消耗 Tokens</span>
+                     <span className="text-[8px] font-bold text-slate-400 mb-0.5">Tokens</span>
                      <span className="font-mono text-[11px] font-bold text-slate-700 leading-none">{formatNumber(ag.tokens)}</span>
                    </div>
                    <div className="flex flex-col items-center justify-center bg-cyan-50/50 border border-cyan-100 rounded-lg py-1.5 shadow-sm relative overflow-hidden">
                      <div className="absolute inset-0 bg-cyan-400/10 blur-md"></div>
                      <span className="text-[8px] font-bold text-cyan-600/80 mb-0.5 flex items-center gap-1 z-10">
-                       <Gem size={8} className="text-cyan-500 fill-cyan-100 drop-shadow-[0_0_2px_rgba(6,182,212,0.8)]"/> 赚取鳞石
+                       <Gem size={8} className="text-cyan-500 fill-cyan-100"/> 鳞石
                      </span>
                      <span className="font-mono text-[11px] font-bold text-cyan-700 leading-none z-10">{formatNumber(ag.linshi)}</span>
                    </div>
                 </div>
 
-                {/* Task Status */}
                 <div className="text-[9px] font-medium mb-2 flex-1">
-                   {ag.status === 'busy' || (ag.status==='online' && ag.task) ? (
-                     <div className="flex items-center justify-between bg-blue-50/50 border border-blue-100 p-1.5 rounded text-blue-700">
-                       <span className="truncate flex-1 pr-1 font-bold">{ag.task}</span>
-                       {ag.status === 'busy' && <span className="font-black shrink-0">{ag.progress}%</span>}
-                     </div>
-                   ) : (
-                     <div className="text-slate-400 p-1.5 bg-slate-50 border border-slate-100 rounded text-center truncate">
-                       {ag.status === 'offline' ? '已切断连接' : '节点空闲待命中...'}
-                     </div>
-                   )}
+                  {ag.status === 'busy' ? (
+                    <div className="flex items-center justify-between bg-blue-50/50 border border-blue-100 p-1.5 rounded text-blue-700">
+                      <span className="truncate flex-1 pr-1 font-bold">{ag.current_task || '执行中'}</span>
+                    </div>
+                  ) : (
+                    <div className="text-slate-400 p-1.5 bg-slate-50 border border-slate-100 rounded text-center truncate">
+                      {ag.status === 'offline' ? '已切断连接' : '节点空闲待命中...'}
+                    </div>
+                  )}
                 </div>
 
-                {/* Footer Actions */}
                 <div className="flex items-center justify-between pt-1 mt-auto border-t border-slate-100">
                    <span className="text-[8px] text-slate-400 font-mono bg-white border border-slate-100 shadow-sm px-1.5 py-0.5 rounded">{ag.id}</span>
                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <CopyIconBtn sk={ag.sk} />
+                     <CopyIconBtn sk={ag.sk || 'sk_***'} />
                      <button onClick={() => setAgentModalState({ isOpen: true, agent: ag })} className="p-1.5 text-slate-400 hover:text-indigo-600 bg-white hover:bg-indigo-50 rounded border border-transparent hover:border-indigo-200 transition-colors shadow-sm" title="编辑节点配置"><Edit size={12}/></button>
-                     <button onClick={() => handleSettings(ag.id)} className="p-1.5 text-slate-400 hover:text-slate-700 bg-white hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition-colors shadow-sm" title="运行日志控制台"><Terminal size={12}/></button>
+                     <button onClick={() => handleDelete(ag.id)} className="p-1.5 text-slate-400 hover:text-rose-600 bg-white hover:bg-rose-50 rounded border border-transparent hover:border-rose-200 transition-colors shadow-sm" title="删除"><X size={12}/></button>
                    </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          // --- 列表视图 ---
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex-1">
             <table className="w-full text-left">
               <thead className="bg-slate-50/80 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -274,7 +364,7 @@ const AgentList = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {currentAgents.map((ag) => (
+                {filteredAgents.map((ag) => (
                   <tr key={ag.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-3">
@@ -297,32 +387,25 @@ const AgentList = () => {
                           <span className="text-[8px] font-bold text-slate-400">Tokens</span>
                           <span className="font-mono text-[10px] font-bold text-slate-700">{formatNumber(ag.tokens)}</span>
                         </div>
-                        <div className="flex flex-col bg-cyan-50/50 border border-cyan-100 rounded px-2 py-1 min-w-[70px] relative overflow-hidden">
-                          <div className="absolute inset-0 bg-cyan-400/10 blur-md"></div>
-                          <span className="text-[8px] font-bold text-cyan-600/80 flex items-center gap-1 z-10"><Gem size={8} className="text-cyan-500 fill-cyan-100 drop-shadow-[0_0_2px_rgba(6,182,212,0.8)]"/> 鳞石</span>
-                          <span className="font-mono text-[10px] font-bold text-cyan-700 z-10">{formatNumber(ag.linshi)}</span>
+                        <div className="flex flex-col bg-cyan-50/50 border border-cyan-100 rounded px-2 py-1 min-w-[70px]">
+                          <span className="text-[8px] font-bold text-cyan-600/80 flex items-center gap-1"><Gem size={8} className="text-cyan-500"/> 鳞石</span>
+                          <span className="font-mono text-[10px] font-bold text-cyan-700">{formatNumber(ag.linshi)}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-2">
-                      <div className="flex flex-col gap-1">
-                        {ag.status === 'busy' ? (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-blue-600 font-bold truncate cursor-pointer hover:underline">{ag.task}</span>
-                              <span className="text-[9px] font-mono text-blue-500 bg-blue-50 px-1 rounded">{ag.progress}%</span>
-                            </div>
-                            {ag.queuedTasks && ag.queuedTasks.length > 0 && <span className="text-[9px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 w-fit">排队：{ag.queuedTasks.length}</span>}
-                          </>
-                        ) : <span className="text-xs text-slate-400 italic">空闲 / 离线</span>}
-                      </div>
+                      {ag.status === 'busy' && ag.current_task ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-blue-600 font-bold truncate">{ag.current_task}</span>
+                        </div>
+                      ) : <span className="text-xs text-slate-400 italic">空闲 / 离线</span>}
                     </td>
                     <td className="px-4 py-2 text-right">
                       <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <CopyIconBtn sk={ag.sk} />
-                        <button onClick={() => handleStopAgent(ag.id)} className={`p-1.5 rounded border transition-colors ${stoppedAgents.has(ag.id) ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-200 bg-white'}`} title={stoppedAgents.has(ag.id) ? '启动' : '停止'}><Square size={12} /></button>
+                        <CopyIconBtn sk={ag.sk || 'sk_***'} />
+                        <button onClick={() => handleStopAgent(ag.id, ag.status)} className={`p-1.5 rounded border transition-colors ${ag.status === 'offline' ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-amber-600 bg-amber-50 border-amber-200'}`} title={ag.status === 'offline' ? '启动' : '停止'}><Square size={12} /></button>
                         <button onClick={() => setAgentModalState({ isOpen: true, agent: ag })} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-200 rounded transition-colors shadow-sm" title="编辑"><Edit size={12} /></button>
-                        <button onClick={() => handleSettings(ag.id)} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-transparent hover:border-slate-200 rounded transition-colors shadow-sm" title="运行日志"><Terminal size={12} /></button>
+                        <button onClick={() => handleDelete(ag.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded transition-colors shadow-sm" title="删除"><X size={12} /></button>
                       </div>
                     </td>
                   </tr>
@@ -335,25 +418,11 @@ const AgentList = () => {
         {/* 分页控制器 */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-3 px-1 pt-2 border-t border-slate-200/60 shrink-0">
-             <span className="text-[10px] font-bold text-slate-500">共匹配到 <span className="text-blue-600">{filteredAgents.length}</span> 个 Agent 节点</span>
+             <span className="text-[10px] font-bold text-slate-500">共 <span className="text-blue-600">{total}</span> 个 Agent 节点</span>
              <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg shadow-sm p-0.5">
-               <button
-                 disabled={currentPage === 1}
-                 onClick={() => setCurrentPage(p => p - 1)}
-                 className="px-2 py-1 text-[10px] font-bold text-slate-600 rounded hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-               >
-                 上一页
-               </button>
-               <div className="px-3 text-[10px] font-mono font-bold text-slate-700 border-x border-slate-100">
-                 {currentPage} / {totalPages}
-               </div>
-               <button
-                 disabled={currentPage === totalPages}
-                 onClick={() => setCurrentPage(p => p + 1)}
-                 className="px-2 py-1 text-[10px] font-bold text-slate-600 rounded hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-               >
-                 下一页
-               </button>
+               <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-2 py-1 text-[10px] font-bold text-slate-600 rounded hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors">上一页</button>
+               <div className="px-3 text-[10px] font-mono font-bold text-slate-700 border-x border-slate-100">{currentPage} / {totalPages}</div>
+               <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-2 py-1 text-[10px] font-bold text-slate-600 rounded hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors">下一页</button>
              </div>
           </div>
         )}
@@ -363,6 +432,7 @@ const AgentList = () => {
         <AgentFormModal
           agent={agentModalState.agent}
           onClose={() => setAgentModalState({ isOpen: false, agent: null })}
+          onSave={handleSave}
         />
       )}
     </div>
