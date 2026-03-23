@@ -20,10 +20,10 @@ python scripts/init_db.py
 ### 3. 启动服务
 
 ```bash
-uvicorn app.main:app --reload --port 8080
+uvicorn app.main:app --reload --port 30009
 ```
 
-访问 http://localhost:8080/docs 查看 API 文档
+访问 http://localhost:30009/docs 查看 API 文档
 
 ## 项目结构
 
