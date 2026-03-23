@@ -7,7 +7,6 @@ import {
   Edit, Trash2, Save, FolderOpen, Search, AlertTriangle, Info
 } from 'lucide-react';
 import { RoleTag } from './Tags';
-import { mockAgents, mockTasks } from '../../data/mockData';
 
 // --- Confirm Modal Component (通用二次确认弹窗) ---
 export const ConfirmModal = ({
@@ -188,8 +187,8 @@ export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent.
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 如果没有传入 agents，使用 mockAgents 作为默认值
-  const agentList = agents.length > 0 ? agents : mockAgents;
+  // 使用传入的 agents 列表
+  const agentList = agents;
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -231,7 +230,7 @@ export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent.
     onChange(value.filter(id => id !== agentId));
   };
 
-  const selectedAgents = mockAgents.filter(a => value.includes(a.id));
+  const selectedAgents = agentList.filter(a => value.includes(a.id));
 
   return (
     <div className="relative">
@@ -395,10 +394,16 @@ export const AttachmentModal = ({ item, onClose }) => {
 };
 
 // --- Create Requirement Modal (3-Step Wizard) ---
-export const CreateRequirementModal = ({ onClose }) => {
+export const CreateRequirementModal = ({ onClose, agents = [] }) => {
   const [step, setStep] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState('');
+  const [agentList, setAgentList] = useState(agents);
+
+  React.useEffect(() => {
+    // 使用传入的 agents
+    setAgentList(agents);
+  }, [agents]);
 
   const [features, setFeatures] = useState([
     { id: 1, name: '多端自适应布局', priority: 'P1', desc: '支持在移动端和 PC 端无缝切换，保证交互体验一致。', isEditing: false },
@@ -613,7 +618,7 @@ export const CreateRequirementModal = ({ onClose }) => {
                             <span className="text-slate-400 select-none flex-1">选择执行 Agent...</span>
                           ) : (
                             phaseAssignments[phase].map(agId => {
-                              const ag = mockAgents.find(a => a.id === agId);
+                              const ag = agentList.find(a => a.id === agId);
                               return (
                                 <span key={agId} className="bg-blue-100 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
                                   {ag?.name.split('-')[1] || ag?.name}
@@ -627,7 +632,7 @@ export const CreateRequirementModal = ({ onClose }) => {
                        {/* Dropdown Panel */}
                        {openDropdown === phase && (
                          <div className="absolute top-[105%] left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto p-1 custom-scrollbar">
-                           {mockAgents.map(ag => (
+                           {agentList.map(ag => (
                              <label key={ag.id} className={`flex items-center gap-2 p-2 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors ${phaseAssignments[phase].includes(ag.id) ? 'bg-blue-50/50' : ''}`}>
                                <input
                                  type="checkbox"
@@ -1079,12 +1084,21 @@ export const FeatureModal = ({ feature, module, onClose, onSave }) => {
 };
 
 // --- Feature Flow Modal ---
-export const FeatureFlowModal = ({ feature, onClose }) => {
+export const FeatureFlowModal = ({ feature, onClose, tasks = [], projectId }) => {
   const [selectedTaskIds, setSelectedTaskIds] = useState(new Set());
   const [viewingTask, setViewingTask] = useState(null);
+  const [taskList, setTaskList] = useState(tasks);
 
   const actualStepIdx = feature.currentStep || 0;
   const [viewedStepIdx, setViewedStepIdx] = useState(actualStepIdx);
+
+  React.useEffect(() => {
+    // 使用传入的 tasks
+    setTaskList(tasks);
+  }, [tasks]);
+
+  const featureTasks = taskList.filter(t => t.req_id === feature.id || t.reqId === feature.id);
+  const canOperate = viewedStepIdx === actualStepIdx;
 
   const steps = [
     { icon: FileText, label: '需求设计' },
@@ -1095,9 +1109,6 @@ export const FeatureFlowModal = ({ feature, onClose }) => {
     { icon: CheckCircle, label: '系统测试' },
     { icon: Flag, label: '项目验收' }
   ];
-
-  const featureTasks = mockTasks.filter(t => t.reqId === feature.id && t.stepIdx === viewedStepIdx);
-  const canOperate = viewedStepIdx === actualStepIdx;
 
   const toggleTaskSelection = (taskId) => {
     const newSet = new Set(selectedTaskIds);

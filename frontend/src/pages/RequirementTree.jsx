@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge, PriorityTag, ReqTypeTag } from '../components/utils/Tags';
 import { FeatureFlowModal, AttachmentModal, CreateRequirementModal, ModuleModal, FeatureModal, ConfirmModal } from '../components/utils/Modal';
-import { getProjects, getRequirementsTree, createRequirement, updateRequirement, deleteRequirement, requirementAction } from '../api';
+import { getProjects, getRequirementsTree, createRequirement, updateRequirement, deleteRequirement, requirementAction, getAgents } from '../api';
 
 const RequirementTree = () => {
   const { projectId } = useParams();
@@ -16,6 +16,7 @@ const RequirementTree = () => {
 
   const [treeData, setTreeData] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFeature, setActiveFeature] = useState(null);
   const [activeAttachment, setActiveAttachment] = useState(null);
@@ -33,9 +34,13 @@ const RequirementTree = () => {
 
   const loadProjects = useCallback(async () => {
     try {
-      const res = await getProjects({ page: 1, page_size: 100 });
-      const projList = res.items || [];
+      const [projRes, agentsRes] = await Promise.all([
+        getProjects({ page: 1, page_size: 100 }),
+        getAgents({ page: 1, page_size: 100 })
+      ]);
+      const projList = projRes.items || [];
       setProjects(projList);
+      setAgents(agentsRes.items || []);
       const proj = projList.find(p => p.id === projectId) || projList[0];
       setCurrentProject(proj);
       if (proj) {
@@ -395,15 +400,15 @@ const RequirementTree = () => {
                     </div>
                   ))}
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         </div>
       </div>
 
-      {activeFeature && <FeatureFlowModal feature={activeFeature} onClose={() => setActiveFeature(null)} />}
+      {activeFeature && <FeatureFlowModal feature={activeFeature} onClose={() => setActiveFeature(null)} tasks={[]} projectId={currentProject?.id} />}
       {activeAttachment && <AttachmentModal item={activeAttachment} onClose={() => setActiveAttachment(null)} />}
-      {showCreateReqModal && <CreateRequirementModal onClose={() => setShowCreateReqModal(false)} />}
+      {showCreateReqModal && <CreateRequirementModal onClose={() => setShowCreateReqModal(false)} agents={agents} />}
       {showModuleModal && (
         <ModuleModal
           module={editingModule}
