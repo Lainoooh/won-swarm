@@ -95,7 +95,7 @@ const RequirementTree = () => {
             parent_id: moduleRes.id,
             title: feature.title,
             description: feature.description || '',
-            req_type: 'new',
+            req_type: feature.req_type || 'new',
             priority: feature.priority || 'P2'
           });
         }
