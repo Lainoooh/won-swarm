@@ -227,7 +227,21 @@ async def create_requirement(project_id: str, data: RequirementCreateSchema, db:
     await db.commit()
     await db.refresh(requirement)
 
-    return RequirementSchema.model_validate(requirement)
+    # 手动构建响应，映射 docs_count -> docs
+    return RequirementSchema(
+        id=requirement.id,
+        project_id=requirement.project_id,
+        parent_id=requirement.parent_id,
+        type=requirement.type,
+        title=requirement.title,
+        creator=requirement.creator,
+        docs=requirement.docs_count,
+        expanded=requirement.expanded,
+        req_type=requirement.req_type,
+        priority=requirement.priority,
+        status=requirement.status,
+        current_step=requirement.current_step,
+    )
 
 
 @router.put("/{project_id}/requirements", response_model=dict)
