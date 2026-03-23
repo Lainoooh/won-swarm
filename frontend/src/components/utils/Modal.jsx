@@ -405,6 +405,7 @@ export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    assigned_agent: '',
     features: []
   });
 
@@ -423,7 +424,6 @@ export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
   const [phaseAssignments, setPhaseAssignments] = useState({
     'UI 设计': [], '概要设计': [], '详细设计': [], '系统研发': [], '系统测试': []
   });
-  const [openDropdown, setOpenDropdown] = useState(null);
 
   React.useEffect(() => {
     if (step === 3 && selectedFeatureIds.size === 0 && features.length > 0) {
@@ -481,13 +481,6 @@ export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
     if (selectedFeatureIds.size === features.length) setSelectedFeatureIds(new Set());
     else setSelectedFeatureIds(new Set(features.map(f => f.id)));
   };
-  const toggleAgentSelection = (phase, agentId) => {
-    setPhaseAssignments(prev => {
-      const list = prev[phase];
-      if (list.includes(agentId)) return { ...prev, [phase]: list.filter(id => id !== agentId) };
-      return { ...prev, [phase]: [...list, agentId] };
-    });
-  };
 
   return (
     <Modal size="2xl" title={<div className="flex items-center gap-1.5"><Plus size={16} className="text-blue-600"/> <span className="text-sm">新增需求大纲流程</span></div>} onClose={onClose}>
@@ -535,10 +528,12 @@ export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
                <div className="flex items-center gap-2 mt-auto">
                  <div className="flex flex-col gap-1 flex-1">
                    <label className="text-[10px] font-bold text-slate-500">指定 Agent</label>
-                   <select className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400">
-                     <option>PC2-项目经理</option>
-                     <option>Admin</option>
-                   </select>
+                   <AgentSelect
+                     value={formData.assigned_agent ? [formData.assigned_agent] : []}
+                     onChange={(agentIds) => setFormData(prev => ({ ...prev, assigned_agent: agentIds[0] || '' }))}
+                     placeholder="选择分析 Agent..."
+                     agents={agentList}
+                   />
                  </div>
                  <button onClick={handleAnalysis} className="mt-4 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded shadow-sm transition-colors flex items-center gap-1.5 shrink-0">
                    {isAnalyzing ? <CheckCircle2 size={14} className="animate-spin"/> : <Play size={14}/>} 进行需求分析
@@ -658,47 +653,13 @@ export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
                          <Cpu size={12} className="text-slate-400"/>
                        </div>
 
-                       {/* Custom Multi-select Dropdown */}
-                       <div
-                         className="min-h-[32px] mt-1 text-[11px] bg-slate-50 border border-slate-200 hover:border-blue-400 transition-colors rounded-lg px-2 py-1.5 flex flex-wrap gap-1.5 cursor-pointer relative items-center"
-                         onClick={() => setOpenDropdown(openDropdown === phase ? null : phase)}
-                       >
-                          {phaseAssignments[phase].length === 0 ? (
-                            <span className="text-slate-400 select-none flex-1">选择执行 Agent...</span>
-                          ) : (
-                            phaseAssignments[phase].map(agId => {
-                              const ag = agentList.find(a => a.id === agId);
-                              return (
-                                <span key={agId} className="bg-blue-100 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
-                                  {ag?.name.split('-')[1] || ag?.name}
-                                </span>
-                              )
-                            })
-                          )}
-                          <ChevronDown size={12} className="text-slate-400 shrink-0 ml-auto"/>
-                       </div>
-
-                       {/* Dropdown Panel */}
-                       {openDropdown === phase && (
-                         <div className="absolute top-[105%] left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto p-1 custom-scrollbar">
-                           {agentList.map(ag => (
-                             <label key={ag.id} className={`flex items-center gap-2 p-2 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors ${phaseAssignments[phase].includes(ag.id) ? 'bg-blue-50/50' : ''}`}>
-                               <input
-                                 type="checkbox"
-                                 className="w-3 h-3 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
-                                 checked={phaseAssignments[phase].includes(ag.id)}
-                                 onChange={() => toggleAgentSelection(phase, ag.id)}
-                               />
-                               <div className="flex flex-col">
-                                 <span className="text-[10px] font-bold text-slate-800">{ag.name}</span>
-                                 <div className="flex gap-1 mt-0.5">
-                                    <RoleTag role={ag.roles[0]} />
-                                 </div>
-                               </div>
-                             </label>
-                           ))}
-                         </div>
-                       )}
+                       {/* 使用统一的 AgentSelect 组件 */}
+                       <AgentSelect
+                         value={phaseAssignments[phase]}
+                         onChange={(agentIds) => setPhaseAssignments(prev => ({ ...prev, [phase]: agentIds }))}
+                         placeholder="选择执行 Agent..."
+                         agents={agentList}
+                       />
                      </div>
                    ))}
                  </div>
