@@ -567,6 +567,7 @@ export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
   const addFeature = () => setFeatures([...features, { id: Date.now(), name: '', priority: 3, reqType: 1, desc: '', isEditing: true }]);
   const toggleEdit = (id) => setFeatures(features.map(f => f.id === id ? { ...f, isEditing: !f.isEditing } : f));
   const deleteFeature = (id) => setFeatures(features.filter(f => f.id !== id));
+  const updateFeature = (id, field, value) => setFeatures(features.map(f => f.id === id ? { ...f, [field]: value } : f));
   const toggleFeatureSelection = (id) => {
     const newSet = new Set(selectedFeatureIds);
     if (newSet.has(id)) newSet.delete(id); else newSet.add(id);
@@ -674,8 +675,8 @@ export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
                      <div className="flex items-center gap-1.5 shrink-0">
                        {f.isEditing ? (
                          <>
-                           <ReqTypeSelect value={f.reqType} onChange={(val) => f.reqType = val} size="small" useEnum />
-                           <PrioritySelect value={f.priority} onChange={(val) => f.priority = val} size="small" useEnum />
+                           <ReqTypeSelect value={f.reqType} onChange={(val) => updateFeature(f.id, 'reqType', val)} size="small" useEnum />
+                           <PrioritySelect value={f.priority} onChange={(val) => updateFeature(f.id, 'priority', val)} size="small" useEnum />
                          </>
                        ) : (
                          <>

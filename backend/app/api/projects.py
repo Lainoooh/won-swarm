@@ -224,6 +224,11 @@ async def create_requirement(project_id: str, data: RequirementCreateSchema, db:
     db.add(requirement)
     project.req_count = project.req_count + 1
 
+    # 创建需求大纲（module）后，自动推进项目流程到 UI 设计阶段（阶段 2）
+    # 流程：1=需求设计 -> 2=UI 设计 -> 3=概要设计 -> 4=详细设计 -> 5=系统研发 -> 6=系统测试 -> 7=项目验收
+    if data.type == "module" and project.current_step == 1:
+        project.current_step = 2  # 推进到 UI 设计阶段
+
     await db.commit()
     await db.refresh(requirement)
 

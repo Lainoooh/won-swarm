@@ -30,6 +30,7 @@ class ProjectSchema(BaseModel):
     manager_id: str
     manager_name: str
     status: str
+    current_step: int = 1  # 1=需求设计，2=UI 设计，3=概要设计，4=详细设计，5=系统研发，6=系统测试，7=项目验收
     start_date: date
     end_date: date
     progress: int
