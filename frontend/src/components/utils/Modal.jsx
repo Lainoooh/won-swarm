@@ -186,6 +186,29 @@ export const PrioritySelect = ({ value, onChange, placeholder = '选择优先级
 export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent...', agents = [] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dropdownDirection, setDropdownDirection] = useState('down');
+  const triggerRef = React.useRef(null);
+
+  // 检测下拉框应该往上还是往下弹出
+  const handleOpenDropdown = () => {
+    if (!triggerRef.current) {
+      setIsOpen(!isOpen);
+      return;
+    }
+
+    const rect = triggerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const dropdownHeight = 280; // 预估下拉框高度 max-h-60 = 240px + 一些余量
+
+    // 如果下方空间不足且上方有足够空间，则往上弹出
+    if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+      setDropdownDirection('up');
+    } else {
+      setDropdownDirection('down');
+    }
+    setIsOpen(!isOpen);
+  };
 
   // 使用传入的 agents 列表
   const agentList = agents;
@@ -235,7 +258,8 @@ export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent.
   return (
     <div className="relative">
       <div
-        onClick={() => setIsOpen(!isOpen)}
+        ref={triggerRef}
+        onClick={handleOpenDropdown}
         className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm cursor-pointer min-h-[38px] flex flex-wrap gap-1.5 items-center"
       >
         {selectedAgents.length === 0 ? (
@@ -257,7 +281,9 @@ export const AgentSelect = ({ value = [], onChange, placeholder = '选择 Agent.
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[99]" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-[100] max-h-60 overflow-hidden flex flex-col">
+          <div className={`absolute left-0 w-full bg-white border border-slate-200 rounded-lg shadow-xl z-[100] max-h-60 overflow-hidden flex flex-col ${
+            dropdownDirection === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'
+          }`}>
             <div className="p-2 border-b border-slate-200 bg-slate-50">
               <div className="relative">
                 <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
