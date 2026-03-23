@@ -1,429 +1,324 @@
-from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Form
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from sqlalchemy import select, func, or_, String
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
 from datetime import datetime
 import uuid
-import bcrypt
-import json
-from typing import Dict, Optional
+import hashlib
 
-from ..database import get_db
-from ..models.agent import Agent
-from ..models.task import Task
-from ..schemas import (
-    AgentRegister, AgentCreateResponse, AgentListResponse,
-    TaskListResponse, CommonResponse
+from app.database import get_db, async_session_maker
+from app.models.agent import Agent
+from app.models.task import Task
+from app.schemas.agent import (
+    AgentCreateSchema,
+    AgentUpdateSchema,
+    AgentRegisterRequest,
+    AgentSchema,
+    AgentListResponse,
+    AgentHeartbeatRequest,
+    AgentStopRequest,
 )
-from ..utils.security import generate_sk, hash_password
+from app.services.websocket_manager import manager
+from app.config import settings
 
-router = APIRouter(prefix="/api/agents", tags=["Agent 管理"])
-
-# WebSocket 连接管理器
-class WebSocketManager:
-    def __init__(self):
-        # agent_id -> WebSocket
-        self.active_connections: Dict[str, WebSocket] = {}
-        # agent_id -> session_id
-        self.sessions: Dict[str, str] = {}
-
-    async def connect(self, websocket: WebSocket, agent_id: str) -> str:
-        """建立 WebSocket 连接"""
-        await websocket.accept()
-        session_id = str(uuid.uuid4())
-        self.active_connections[agent_id] = websocket
-        self.sessions[agent_id] = session_id
-        return session_id
-
-    def disconnect(self, agent_id: str):
-        """断开 WebSocket 连接"""
-        if agent_id in self.active_connections:
-            del self.active_connections[agent_id]
-        if agent_id in self.sessions:
-            del self.sessions[agent_id]
-
-    async def send_to_agent(self, agent_id: str, message: dict):
-        """发送消息给指定 Agent"""
-        websocket = self.active_connections.get(agent_id)
-        if websocket:
-            try:
-                await websocket.send_json(message)
-            except Exception as e:
-                print(f"发送消息失败：{e}")
-                self.disconnect(agent_id)
-
-    async def broadcast(self, message: dict):
-        """广播消息给所有在线 Agent"""
-        for agent_id in list(self.active_connections.keys()):
-            await self.send_to_agent(agent_id, message)
-
-    def get_connected_agents(self) -> list:
-        """获取所有在线 Agent ID"""
-        return list(self.active_connections.keys())
+router = APIRouter(prefix="/api/agents", tags=["Agents"])
 
 
-# 全局 WebSocket 管理器
-ws_manager = WebSocketManager()
+def generate_agent_id() -> str:
+    return f"ag-{uuid.uuid4().hex[:4]}"
 
 
-@router.post("/register", response_model=CommonResponse)
-async def register_agent(agent_data: AgentRegister, db: Session = Depends(get_db)):
-    """
-    Agent 注册（使用平台 AK）
-
-    返回 Worker SK 用于后续 WebSocket 连接和 API 调用
-    """
-    # 生成平台 AK（一次性使用）和 Worker SK（运行态凭证）
-    platform_ak = generate_sk()  # 用于注册
-    worker_sk = generate_sk()    # 用于运行
-
-    # 哈希存储
-    platform_ak_hash = hash_password(platform_ak)
-    worker_sk_hash = hash_password(worker_sk)
-
-    # 创建 Agent
-    agent_id = agent_data.agent_id or str(uuid.uuid4())
-
-    agent = Agent(
-        id=agent_id,
-        name=agent_data.name,
-        platform_ak_hash=platform_ak_hash,
-        worker_sk_hash=worker_sk_hash,
-        worker_sk=worker_sk,  # 明文存储（简化起见，生产环境应加密）
-        roles=agent_data.roles,
-        capabilities=agent_data.capabilities,
-        max_concurrent_tasks=agent_data.max_concurrent_tasks,
-        status="offline",
-    )
-
-    db.add(agent)
-    db.commit()
-    db.refresh(agent)
-
-    return CommonResponse(
-        code=200,
-        message="注册成功",
-        data={
-            "agent_id": agent.id,
-            "platform_ak": platform_ak,
-            "worker_sk": worker_sk,
-            "register_url": f"ws://localhost:30009/ws/agent/connect"
-        }
-    )
+def hash_sk(sk: str) -> str:
+    return hashlib.sha256(sk.encode()).hexdigest()[:16]
 
 
 @router.get("", response_model=AgentListResponse)
 async def get_agents(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     status: Optional[str] = None,
-    role: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20,
-    db: Session = Depends(get_db)
+    search: Optional[str] = None,
 ):
-    """
-    获取 Agent 列表
-    """
-    query = db.query(Agent)
+    async with async_session_maker() as session:
+        query = select(Agent)
 
-    if status:
-        query = query.filter(Agent.status == status)
+        if status:
+            query = query.where(Agent.status == status)
 
-    if role:
-        # JSON 字段查询
-        query = query.filter(Agent.roles.like(f'%"{role}"%'))
+        if search:
+            search_pattern = f"%{search}%"
+            query = query.where(
+                or_(
+                    Agent.name.like(search_pattern),
+                    Agent.roles.cast(String).like(search_pattern),
+                )
+            )
 
-    total = query.count()
-    agents = query.offset((page - 1) * page_size).limit(page_size).all()
+        query = query.order_by(Agent.last_heartbeat.desc())
 
-    items = []
-    for agent in agents:
-        items.append({
-            "id": agent.id,
-            "name": agent.name,
-            "roles": agent.roles,
-            "status": agent.status,
-            "current_task_id": agent.current_task_id,
-            "last_heartbeat": agent.last_heartbeat.isoformat() if agent.last_heartbeat else None,
-            "created_at": agent.created_at.isoformat() if agent.created_at else None
-        })
+        offset = (page - 1) * page_size
+        query = query.offset(offset).limit(page_size)
 
-    return AgentListResponse(
-        code=200,
-        data={
-            "total": total,
-            "items": items
-        }
+        result = await session.execute(query)
+        agents = result.scalars().all()
+
+        count_query = select(func.count(Agent.id))
+        if status:
+            count_query = count_query.where(Agent.status == status)
+        total_result = await session.execute(count_query)
+        total = total_result.scalar() or 0
+
+        return AgentListResponse(
+            items=[AgentSchema.model_validate(a) for a in agents],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
+
+
+@router.get("/{agent_id}", response_model=AgentSchema)
+async def get_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    return AgentSchema.model_validate(agent)
+
+
+@router.post("", response_model=AgentSchema)
+async def create_agent(data: AgentCreateSchema, db: AsyncSession = Depends(get_db)):
+    sk_hash = hash_sk(data.worker_sk)
+    existing = await db.execute(select(Agent).where(Agent.worker_sk_hash == sk_hash))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Worker SK already registered")
+
+    agent_id = generate_agent_id()
+
+    agent = Agent(
+        id=agent_id,
+        name=data.name,
+        platform_ak_hash=hash_sk(data.platform_ak) if data.platform_ak else None,
+        worker_sk_hash=sk_hash,
+        roles=data.roles,
+        capabilities=data.capabilities,
+        model=data.model,
+        status="offline",
+        tokens=0,
+        linshi=0,
     )
 
+    db.add(agent)
+    await db.commit()
+    await db.refresh(agent)
 
-@router.get("/{agent_id}", response_model=CommonResponse)
-async def get_agent(agent_id: str, db: Session = Depends(get_db)):
-    """
-    获取 Agent 详情
-    """
-    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    await manager.broadcast_agent_status(agent_id, "offline")
+
+    return AgentSchema.model_validate(agent)
+
+
+@router.put("/{agent_id}", response_model=AgentSchema)
+async def update_agent(agent_id: str, data: AgentUpdateSchema, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+
     if not agent:
-        raise HTTPException(status_code=404, detail="Agent 不存在")
+        raise HTTPException(status_code=404, detail="Agent not found")
 
-    return CommonResponse(
-        code=200,
-        data={
-            "id": agent.id,
-            "name": agent.name,
-            "roles": agent.roles,
-            "status": agent.status,
-            "current_task_id": agent.current_task_id,
-            "last_heartbeat": agent.last_heartbeat.isoformat() if agent.last_heartbeat else None,
-            "created_at": agent.created_at.isoformat() if agent.created_at else None
-        }
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(agent, field, value)
+
+    await db.commit()
+    await db.refresh(agent)
+
+    if "status" in update_data:
+        await manager.broadcast_agent_status(agent_id, agent.status)
+
+    return AgentSchema.model_validate(agent)
+
+
+@router.delete("/{agent_id}")
+async def delete_agent(agent_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    await db.delete(agent)
+    await db.commit()
+
+    await manager.broadcast_agent_status(agent_id, "offline")
+
+    return {"success": True}
+
+
+@router.post("/{agent_id}/stop", response_model=AgentSchema)
+async def stop_agent(agent_id: str, data: AgentStopRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    agent.status = "offline" if data.stop else "idle"
+
+    await db.commit()
+    await db.refresh(agent)
+
+    await manager.broadcast_agent_status(agent_id, agent.status)
+
+    return AgentSchema.model_validate(agent)
+
+
+@router.post("/register", response_model=dict)
+async def register_agent(data: AgentRegisterRequest, db: AsyncSession = Depends(get_db)):
+    if not data.sk.startswith("sk_"):
+        raise HTTPException(status_code=400, detail="Invalid SK format")
+
+    sk_hash = hash_sk(data.sk)
+    existing = await db.execute(select(Agent).where(Agent.worker_sk_hash == sk_hash))
+    if existing.scalar_one_or_none():
+        return {"id": existing.scalar_one().id, "sk": data.sk}
+
+    agent_id = generate_agent_id()
+
+    agent = Agent(
+        id=agent_id,
+        name=data.name,
+        worker_sk_hash=sk_hash,
+        roles=data.roles,
+        capabilities=data.caps,
+        model=data.model,
+        status="offline",
+        tokens=0,
+        linshi=0,
     )
 
+    db.add(agent)
+    await db.commit()
 
-@router.post("/{agent_id}/heartbeat", response_model=CommonResponse)
-async def agent_heartbeat(
-    agent_id: str,
-    heartbeat_data: dict,
-    db: Session = Depends(get_db)
-):
-    """
-    Agent 心跳上报
-    """
-    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+    return {"id": agent_id, "sk": data.sk}
+
+
+@router.post("/{agent_id}/heartbeat")
+async def heartbeat(agent_id: str, data: AgentHeartbeatRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+
     if not agent:
-        raise HTTPException(status_code=404, detail="Agent 不存在")
+        raise HTTPException(status_code=404, detail="Agent not found")
 
-    # 更新状态
-    agent.status = heartbeat_data.get("status", "idle")
-    agent.current_task_id = heartbeat_data.get("current_task_id")
-    agent.last_heartbeat = datetime.utcnow()
+    agent.last_heartbeat = datetime.now()
+    if data.status:
+        agent.status = data.status
+    if data.task:
+        agent.current_task_id = data.task
+    if data.progress is not None:
+        await manager.broadcast_progress_update(agent_id, data.task or "", data.progress)
 
-    db.commit()
+    await db.commit()
 
-    return CommonResponse(code=200, message="心跳已接收")
+    await manager.broadcast_agent_status(agent_id, agent.status, {
+        "task": data.task,
+        "progress": data.progress,
+    })
+
+    return {"success": True}
 
 
-@router.get("/{agent_id}/tasks/pending", response_model=TaskListResponse)
-async def get_pending_tasks(agent_id: str, db: Session = Depends(get_db)):
-    """
-    获取 Agent 待处理任务（HTTP 轮询备用方案）
-    """
-    agent = db.query(Agent).filter(Agent.id == agent_id).first()
+@router.post("/{agent_id}/task/assign")
+async def assign_task_to_agent(agent_id: str, task_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+
     if not agent:
-        raise HTTPException(status_code=404, detail="Agent 不存在")
+        raise HTTPException(status_code=404, detail="Agent not found")
 
-    tasks = db.query(Task).filter(
-        Task.assignee_id == agent_id,
-        Task.status == "todo"
-    ).all()
+    if not manager.get_agent_status(agent_id):
+        raise HTTPException(status_code=400, detail="Agent is offline")
 
-    items = []
-    for task in tasks:
-        items.append({
+    agent.current_task_id = task_id
+    agent.status = "busy"
+    await db.commit()
+
+    task_result = await db.execute(select(Task).where(Task.id == task_id))
+    task = task_result.scalar_one_or_none()
+
+    if task:
+        task_data = {
             "id": task.id,
             "title": task.title,
-            "type": task.type,
-            "project_id": task.project_id,
-            "requirement_id": task.requirement_id,
-            "priority": "P2",
-            "created_at": task.created_at.isoformat() if task.created_at else None
-        })
+            "description": task.description,
+            "req_id": task.req_id,
+            "step_idx": task.step_idx,
+            "priority": task.priority,
+            "due_date": str(task.due_date) if task.due_date else None,
+        }
+        await manager.send_task_to_agent(agent_id, task_data)
 
-    return TaskListResponse(
-        code=200,
-        data={"tasks": items}
-    )
+    await manager.broadcast_agent_status(agent_id, "busy", {"task": task_id})
 
-
-@router.post("/{task_id}/claim", response_model=CommonResponse)
-async def claim_task(task_id: str, agent_id: str = Form(...), db: Session = Depends(get_db)):
-    """
-    领取任务
-    """
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="任务不存在")
-
-    agent = db.query(Agent).filter(Agent.id == agent_id).first()
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent 不存在")
-
-    # 检查任务状态
-    if task.status != "todo":
-        raise HTTPException(status_code=400, detail="任务不可领取")
-
-    # 检查 Agent 是否已分配给此任务
-    if task.assignee_id != agent_id:
-        raise HTTPException(status_code=400, detail="任务未分配给此 Agent")
-
-    # 更新任务状态为执行中
-    task.status = "in_progress"
-    task.accepted_at = datetime.utcnow()
-
-    # 更新 Agent 状态
-    agent.status = "busy"
-    agent.current_task_id = task_id
-    agent.last_heartbeat = datetime.utcnow()
-
-    db.commit()
-
-    # 通过 WebSocket 通知任务已领取
-    try:
-        await ws_manager.send_to_agent(agent_id, {
-            "type": "task_claimed",
-            "task_id": task_id,
-            "message": "任务领取成功"
-        })
-    except Exception:
-        pass  # WebSocket 未连接也不影响领取
-
-    return CommonResponse(code=200, message="任务领取成功")
+    return {"success": True, "task_id": task_id}
 
 
-@router.post("/{task_id}/status", response_model=CommonResponse)
-async def update_task_status(task_id: str, status_data: dict, db: Session = Depends(get_db)):
-    """
-    上报任务状态
-    """
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="任务不存在")
+@router.websocket("/ws/{agent_id}")
+async def websocket_agent(websocket: WebSocket, agent_id: str):
+    async with async_session_maker() as session:
+        result = await session.execute(select(Agent).where(Agent.id == agent_id))
+        agent = result.scalar_one_or_none()
 
-    if "status" in status_data:
-        task.status = status_data["status"]
-    if "progress" in status_data:
-        # 进度可以在 result 中记录
-        if task.result is None:
-            task.result = {}
-        task.result["progress"] = status_data["progress"]
-    if "message" in status_data:
-        if task.result is None:
-            task.result = {}
-        task.result["status_message"] = status_data["message"]
-
-    task.updated_at = datetime.utcnow()
-
-    db.commit()
-
-    return CommonResponse(code=200, message="状态已更新")
-
-
-@router.post("/{task_id}/complete", response_model=CommonResponse)
-async def complete_task(task_id: str, complete_data: dict, db: Session = Depends(get_db)):
-    """
-    完成任务
-    """
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="任务不存在")
-
-    task.status = "completed"
-    task.completed_at = datetime.utcnow()
-    task.result = complete_data.get("result", {})
-    if "message" in complete_data:
-        if task.result is None:
-            task.result = {}
-        task.result["message"] = complete_data["message"]
-
-    # 更新关联的 Agent 状态
-    if task.assignee_id:
-        agent = db.query(Agent).filter(Agent.id == task.assignee_id).first()
-        if agent:
-            agent.status = "idle"
-            agent.current_task_id = None
-            agent.last_heartbeat = datetime.utcnow()
-
-            # 通过 WebSocket 通知任务完成
-            try:
-                await ws_manager.send_to_agent(agent.id, {
-                    "type": "task_completed_notify",
-                    "task_id": task_id,
-                    "message": "任务已完成"
-                })
-            except Exception:
-                pass
-
-    db.commit()
-
-    return CommonResponse(code=200, message="任务已完成")
-
-
-# ============== WebSocket 连接 ==============
-
-@router.websocket("/ws/connect")
-async def websocket_connect(websocket: WebSocket):
-    """
-    Agent WebSocket 连接入口
-
-    查询参数：sk=worker_sk
-    """
-    # 获取 SK 参数
-    sk = websocket.query_params.get("sk")
-    if not sk:
-        await websocket.close(code=4001, reason="缺少 SK 参数")
-        return
-
-    # 验证 SK（简化版，实际应从数据库查询）
-    # 这里先接受连接，后续在消息处理时验证
-
-    try:
-        # 建立连接（需要 agent_id，从 SK 关联或首次消息获取）
-        # 简化处理：等待 Agent 发送第一条消息包含 agent_id
-        await websocket.accept()
-
-        # 等待第一条消息获取 agent_id
-        data = await websocket.receive_json()
-        agent_id = data.get("agent_id")
-
-        if not agent_id:
-            await websocket.close(code=4002, reason="缺少 agent_id")
+        if not agent:
+            await websocket.close(code=4004, reason="Agent not found")
             return
 
-        # 建立连接
-        session_id = await ws_manager.connect(websocket, agent_id)
+    connected = await manager.connect_agent(websocket, agent_id)
+    if not connected:
+        return
 
-        # 发送连接成功消息
-        await websocket.send_json({
-            "type": "connected",
-            "agent_id": agent_id,
-            "session_id": session_id,
-            "server_time": datetime.utcnow().isoformat()
-        })
+    try:
+        async with async_session_maker() as session:
+            result = await session.execute(select(Agent).where(Agent.id == agent_id))
+            agent = result.scalar_one_or_none()
+            if agent:
+                agent.status = "online"
+                agent.last_heartbeat = datetime.now()
+                agent.websocket_session_id = id(websocket)
+                await session.commit()
 
-        # 保持连接，处理消息
+        await manager.broadcast_agent_status(agent_id, "online")
+
         while True:
             try:
                 data = await websocket.receive_json()
                 msg_type = data.get("type")
-
                 if msg_type == "heartbeat":
-                    # 心跳处理
-                    await websocket.send_json({
-                        "type": "heartbeat_ack",
-                        "server_time": datetime.utcnow().isoformat()
-                    })
-
-                elif msg_type == "task_ack":
-                    # 任务确认
-                    print(f"任务确认：{data}")
-
-                elif msg_type == "task_progress":
-                    # 任务进度上报
-                    print(f"任务进度：{data}")
-
-                elif msg_type == "task_completed":
-                    # 任务完成上报
-                    print(f"任务完成：{data}")
+                    await websocket.send_json({"type": "heartbeat_ack"})
+                elif msg_type == "task_complete":
+                    task_id = data.get("task_id")
+                    print(f"[WS] Agent {agent_id} completed task {task_id}")
+                    await manager.broadcast_task_update({"id": task_id, "status": "completed"})
+                elif msg_type == "progress":
+                    progress = data.get("progress")
+                    task_id = data.get("task_id")
+                    await manager.broadcast_progress_update(agent_id, task_id, progress)
 
             except WebSocketDisconnect:
-                ws_manager.disconnect(agent_id)
                 break
             except Exception as e:
-                print(f"WebSocket 消息处理错误：{e}")
+                print(f"[WS] Error processing message from {agent_id}: {e}")
                 break
 
-    except WebSocketDisconnect:
-        print("WebSocket 断开连接")
-    except Exception as e:
-        print(f"WebSocket 连接错误：{e}")
-        try:
-            await websocket.close()
-        except Exception:
-            pass
+    finally:
+        manager.disconnect_agent(agent_id)
+        async with async_session_maker() as session:
+            result = await session.execute(select(Agent).where(Agent.id == agent_id))
+            agent = result.scalar_one_or_none()
+            if agent:
+                agent.status = "offline"
+                agent.websocket_session_id = None
+                await session.commit()
+
+        await manager.broadcast_agent_status(agent_id, "offline")

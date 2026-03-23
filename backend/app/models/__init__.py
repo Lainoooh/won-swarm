@@ -1,26 +1,6 @@
-# Models
-from .base import Base
-from .user import User
-from .agent import Agent
-from .project import Project
-from .requirement import Requirement
-from .task import Task
-from .document import Document
-from .audit_log import AuditLog
-from .project_agent import ProjectAgent
-from .task_assignment import TaskAssignment
-from .notification import Notification
+from app.models.agent import Agent
+from app.models.project import Project
+from app.models.requirement import Requirement
+from app.models.task import Task
 
-__all__ = [
-    "Base",
-    "User",
-    "Agent",
-    "Project",
-    "Requirement",
-    "Task",
-    "Document",
-    "AuditLog",
-    "ProjectAgent",
-    "TaskAssignment",
-    "Notification",
-]
+__all__ = ["Agent", "Project", "Requirement", "Task"]

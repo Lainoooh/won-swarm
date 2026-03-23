@@ -1,18 +1,20 @@
-from sqlalchemy import Column, String, Integer, Date, JSON, DateTime, ForeignKey
-from sqlalchemy.sql import func
-from .base import Base
+from sqlalchemy import Column, String, Integer, Date, DateTime, func
+from app.database import Base
 
 
 class Project(Base):
-    """项目表"""
     __tablename__ = "projects"
 
-    id = Column(String(36), primary_key=True)
-    name = Column(String(100), nullable=False)
-    description = Column(String)
-    manager_id = Column(String(36), ForeignKey("users.id"))
-    status = Column(String(20), default="planning")  # planning/in_progress/completed/archived
-    start_date = Column(Date)
-    end_date = Column(Date)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    id = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=False, index=True)
+    description = Column(String, nullable=True, default="")
+    manager_id = Column(String, nullable=False)
+    manager_name = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="planning", index=True)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    progress = Column(Integer, nullable=False, default=0)
+    req_count = Column(Integer, nullable=False, default=0)
+    task_count = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

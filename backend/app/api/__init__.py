@@ -1,4 +1,4 @@
-# API
-from . import auth, agents, projects, tasks, requirements, documents
+from app.api.agents import router as agents_router
+from app.api.projects import router as projects_router
 
-__all__ = ["auth", "agents", "projects", "tasks", "requirements", "documents"]
+__all__ = ["agents_router", "projects_router"]

@@ -1,207 +1,373 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, delete
+from typing import Optional
+from datetime import datetime, date
 import uuid
 
-from ..database import get_db
-from ..models.project import Project
-from ..models.requirement import Requirement
-from ..models.task import Task
-from ..schemas import CommonResponse, ProjectListResponse
+from app.database import get_db, async_session_maker
+from app.models.project import Project
+from app.models.requirement import Requirement
+from app.models.task import Task
+from app.schemas.project import (
+    ProjectCreateSchema,
+    ProjectUpdateSchema,
+    ProjectSchema,
+    ProjectListResponse,
+)
+from app.schemas.requirement import (
+    RequirementCreateSchema,
+    RequirementUpdateSchema,
+    RequirementSchema,
+    RequirementTreeResponse,
+    BatchUpdateRequirementSchema,
+)
 
-router = APIRouter(prefix="/api/projects", tags=["项目管理"])
+router = APIRouter(prefix="/api/projects", tags=["Projects"])
+
+
+def generate_project_id() -> str:
+    return f"PROJ-{uuid.uuid4().hex[:4].upper()}"
+
+
+def generate_requirement_id(req_type: str = "module") -> str:
+    prefix = "MOD" if req_type == "module" else "FEAT"
+    return f"{prefix}-{uuid.uuid4().hex[:3].upper()}"
 
 
 @router.get("", response_model=ProjectListResponse)
 async def get_projects(
-    status_param: str = None,
-    page: int = 1,
-    page_size: int = 20,
-    db: Session = Depends(get_db)
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    status: Optional[str] = None,
 ):
-    """
-    获取项目列表
-    """
-    query = db.query(Project)
+    async with async_session_maker() as session:
+        query = select(Project)
 
-    if status_param:
-        query = query.filter(Project.status == status_param)
+        if status:
+            query = query.where(Project.status == status)
 
-    total = query.count()
-    projects = query.offset((page - 1) * page_size).limit(page_size).all()
+        query = query.order_by(Project.created_at.desc())
 
-    items = []
-    for project in projects:
-        # 统计任务
-        task_count = db.query(Task).filter(Task.project_id == project.id).count()
-        completed_count = db.query(Task).filter(
-            Task.project_id == project.id,
-            Task.status == "completed"
-        ).count()
+        offset = (page - 1) * page_size
+        query = query.offset(offset).limit(page_size)
 
-        items.append({
-            "id": project.id,
-            "name": project.name,
-            "description": project.description,
-            "status": project.status,
-            "manager_id": project.manager_id,
-            "task_count": task_count,
-            "completed_count": completed_count,
-            "progress": int((completed_count / task_count * 100) if task_count > 0 else 0),
-            "created_at": project.created_at.isoformat() if project.created_at else None
-        })
+        result = await session.execute(query)
+        projects = result.scalars().all()
 
-    return ProjectListResponse(
-        code=200,
-        data={
-            "total": total,
-            "items": items
-        }
-    )
+        count_query = select(func.count(Project.id))
+        if status:
+            count_query = count_query.where(Project.status == status)
+        total_result = await session.execute(count_query)
+        total = total_result.scalar() or 0
+
+        return ProjectListResponse(
+            items=[ProjectSchema.model_validate(p) for p in projects],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
 
 
-@router.post("", response_model=CommonResponse)
-async def create_project(project_data: dict, db: Session = Depends(get_db)):
-    """
-    创建项目
-    """
+@router.get("/{project_id}", response_model=ProjectSchema)
+async def get_project(project_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    return ProjectSchema.model_validate(project)
+
+
+@router.post("", response_model=ProjectSchema)
+async def create_project(data: ProjectCreateSchema, db: AsyncSession = Depends(get_db)):
+    project_id = generate_project_id()
+
     project = Project(
-        id=str(uuid.uuid4()),
-        name=project_data.get("name"),
-        description=project_data.get("description"),
-        manager_id=project_data.get("manager_id"),
-        status=project_data.get("status", "planning"),
+        id=project_id,
+        name=data.name,
+        description=data.description,
+        manager_id=data.manager_id,
+        manager_name=data.manager_name,
+        start_date=data.start_date,
+        end_date=data.end_date,
+        status="planning",
+        progress=0,
+        req_count=0,
+        task_count=0,
     )
 
     db.add(project)
-    db.commit()
-    db.refresh(project)
+    await db.commit()
+    await db.refresh(project)
 
-    return CommonResponse(
-        code=200,
-        message="项目创建成功",
-        data={"id": project.id}
-    )
+    return ProjectSchema.model_validate(project)
 
 
-@router.get("/{project_id}", response_model=CommonResponse)
-async def get_project(project_id: str, db: Session = Depends(get_db)):
-    """
-    获取项目详情
-    """
-    project = db.query(Project).filter(Project.id == project_id).first()
+@router.put("/{project_id}", response_model=ProjectSchema)
+async def update_project(project_id: str, data: ProjectUpdateSchema, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+
     if not project:
-        raise HTTPException(status_code=404, detail="项目不存在")
+        raise HTTPException(status_code=404, detail="Project not found")
 
-    # 统计信息
-    task_count = db.query(Task).filter(Task.project_id == project_id).count()
-    completed_count = db.query(Task).filter(
-        Task.project_id == project_id,
-        Task.status == "completed"
-    ).count()
-    requirement_count = db.query(Requirement).filter(
-        Requirement.project_id == project_id
-    ).count()
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(project, field, value)
 
-    return CommonResponse(
-        code=200,
-        data={
-            "id": project.id,
-            "name": project.name,
-            "description": project.description,
-            "status": project.status,
-            "manager_id": project.manager_id,
-            "task_count": task_count,
-            "completed_count": completed_count,
-            "requirement_count": requirement_count,
-            "progress": int((completed_count / task_count * 100) if task_count > 0 else 0),
-            "created_at": project.created_at.isoformat() if project.created_at else None
+    await db.commit()
+    await db.refresh(project)
+
+    return ProjectSchema.model_validate(project)
+
+
+@router.delete("/{project_id}")
+async def delete_project(project_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Project).where(Project.id == project_id))
+    project = result.scalar_one_or_none()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    await db.delete(project)
+    await db.commit()
+
+    return {"success": True}
+
+
+@router.get("/{project_id}/requirements", response_model=RequirementTreeResponse)
+async def get_requirements_tree(project_id: str, db: AsyncSession = Depends(get_db)):
+    project_result = await db.execute(select(Project).where(Project.id == project_id))
+    project = project_result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    modules_result = await db.execute(
+        select(Requirement)
+        .where(Requirement.project_id == project_id, Requirement.parent_id.is_(None))
+        .order_by(Requirement.sort_order)
+    )
+    modules = modules_result.scalars().all()
+
+    result = []
+    for module in modules:
+        module_dict = {
+            "id": module.id,
+            "project_id": module.project_id,
+            "parent_id": module.parent_id,
+            "type": module.type,
+            "title": module.title,
+            "creator": module.creator,
+            "docs": module.docs_count,
+            "expanded": module.expanded,
+            "children": [],
         }
-    )
+
+        features_result = await db.execute(
+            select(Requirement)
+            .where(Requirement.parent_id == module.id)
+            .order_by(Requirement.sort_order)
+        )
+        features = features_result.scalars().all()
+
+        for feature in features:
+            module_dict["children"].append({
+                "id": feature.id,
+                "project_id": feature.project_id,
+                "parent_id": feature.parent_id,
+                "type": feature.type,
+                "title": feature.title,
+                "creator": feature.creator,
+                "docs": feature.docs_count,
+                "req_type": feature.req_type,
+                "priority": feature.priority,
+                "status": feature.status,
+                "current_step": feature.current_step,
+            })
+
+        result.append(module_dict)
+
+    return RequirementTreeResponse(items=result)
 
 
-@router.put("/{project_id}", response_model=CommonResponse)
-async def update_project(project_id: str, project_data: dict, db: Session = Depends(get_db)):
-    """
-    更新项目
-    """
-    project = db.query(Project).filter(Project.id == project_id).first()
+@router.post("/{project_id}/requirements", response_model=RequirementSchema)
+async def create_requirement(project_id: str, data: RequirementCreateSchema, db: AsyncSession = Depends(get_db)):
+    project_result = await db.execute(select(Project).where(Project.id == project_id))
+    project = project_result.scalar_one_or_none()
     if not project:
-        raise HTTPException(status_code=404, detail="项目不存在")
+        raise HTTPException(status_code=404, detail="Project not found")
 
-    # 更新字段
-    for key, value in project_data.items():
-        if hasattr(project, key) and value is not None:
-            setattr(project, key, value)
+    if data.parent_id:
+        parent_result = await db.execute(select(Requirement).where(Requirement.id == data.parent_id))
+        parent = parent_result.scalar_one_or_none()
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent module not found")
 
-    db.commit()
-    db.refresh(project)
+    req_id = generate_requirement_id(data.type)
 
-    return CommonResponse(code=200, message="项目已更新")
-
-
-@router.delete("/{project_id}", response_model=CommonResponse)
-async def delete_project(project_id: str, db: Session = Depends(get_db)):
-    """
-    删除项目
-    """
-    project = db.query(Project).filter(Project.id == project_id).first()
-    if not project:
-        raise HTTPException(status_code=404, detail="项目不存在")
-
-    db.delete(project)
-    db.commit()
-
-    return CommonResponse(code=200, message="项目已删除")
-
-
-@router.get("/{project_id}/requirements", response_model=CommonResponse)
-async def get_project_requirements(project_id: str, db: Session = Depends(get_db)):
-    """
-    获取项目需求列表
-    """
-    requirements = db.query(Requirement).filter(
-        Requirement.project_id == project_id
-    ).order_by(Requirement.created_at.desc()).all()
-
-    items = []
-    for req in requirements:
-        items.append({
-            "id": req.id,
-            "title": req.title,
-            "type": req.type,
-            "priority": req.priority,
-            "status": req.status,
-            "created_at": req.created_at.isoformat() if req.created_at else None
-        })
-
-    return CommonResponse(
-        code=200,
-        data={"total": len(items), "items": items}
+    requirement = Requirement(
+        id=req_id,
+        project_id=project_id,
+        parent_id=data.parent_id,
+        type=data.type,
+        title=data.title,
+        description=data.description,
+        req_type=data.req_type,
+        priority=data.priority,
+        status="pending" if data.type == "feature" else None,
+        current_step=0 if data.type == "feature" else None,
+        sort_order=0,
     )
 
+    db.add(requirement)
+    project.req_count = project.req_count + 1
 
-@router.get("/{project_id}/tasks", response_model=CommonResponse)
-async def get_project_tasks(project_id: str, db: Session = Depends(get_db)):
-    """
-    获取项目任务列表
-    """
-    tasks = db.query(Task).filter(
-        Task.project_id == project_id
-    ).order_by(Task.created_at.desc()).all()
+    await db.commit()
+    await db.refresh(requirement)
 
-    items = []
-    for task in tasks:
-        items.append({
-            "id": task.id,
-            "title": task.title,
-            "type": task.type,
-            "status": task.status,
-            "assignee_id": task.assignee_id,
-            "created_at": task.created_at.isoformat() if task.created_at else None
-        })
+    return RequirementSchema.model_validate(requirement)
 
-    return CommonResponse(
-        code=200,
-        data={"total": len(items), "items": items}
-    )
+
+@router.put("/{project_id}/requirements", response_model=dict)
+async def update_requirements_tree(
+    project_id: str,
+    data: BatchUpdateRequirementSchema,
+    db: AsyncSession = Depends(get_db)
+):
+    for req_data in data.requirements:
+        result = await db.execute(select(Requirement).where(Requirement.id == req_data.id))
+        requirement = result.scalar_one_or_none()
+        if requirement:
+            update_data = req_data.model_dump(exclude_unset=True, exclude={"children", "project_id", "parent_id", "type", "creator", "docs"})
+            for field, value in update_data.items():
+                setattr(requirement, field, value)
+
+    await db.commit()
+    return {"success": True}
+
+
+@router.put("/requirements/{req_id}", response_model=RequirementSchema)
+async def update_requirement(req_id: str, data: RequirementUpdateSchema, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Requirement).where(Requirement.id == req_id))
+    requirement = result.scalar_one_or_none()
+
+    if not requirement:
+        raise HTTPException(status_code=404, detail="Requirement not found")
+
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(requirement, field, value)
+
+    await db.commit()
+    await db.refresh(requirement)
+
+    return RequirementSchema.model_validate(requirement)
+
+
+@router.delete("/requirements/{req_id}")
+async def delete_requirement(req_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Requirement).where(Requirement.id == req_id))
+    requirement = result.scalar_one_or_none()
+
+    if not requirement:
+        raise HTTPException(status_code=404, detail="Requirement not found")
+
+    if requirement.type == "module":
+        await db.execute(delete(Requirement).where(Requirement.parent_id == req_id))
+
+    project_result = await db.execute(select(Project).where(Project.id == requirement.project_id))
+    project = project_result.scalar_one_or_none()
+    if project:
+        project.req_count = max(0, project.req_count - 1)
+
+    await db.delete(requirement)
+    await db.commit()
+
+    return {"success": True}
+
+
+@router.post("/requirements/{req_id}/action", response_model=RequirementSchema)
+async def requirement_action(req_id: str, data: dict, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Requirement).where(Requirement.id == req_id))
+    requirement = result.scalar_one_or_none()
+
+    if not requirement:
+        raise HTTPException(status_code=404, detail="Requirement not found")
+
+    action = data.get("action")
+
+    if action == "cancel":
+        requirement.status = "pending"
+        requirement.current_step = 0
+    elif action == "pause":
+        pass
+    elif action == "advance":
+        status_order = ["pending", "planning", "in_development", "reviewing", "testing", "completed"]
+        if requirement.status in status_order:
+            current_idx = status_order.index(requirement.status)
+            if current_idx < len(status_order) - 1:
+                requirement.status = status_order[current_idx + 1]
+                requirement.current_step = current_idx + 1
+    elif action == "complete":
+        requirement.status = "completed"
+
+    await db.commit()
+    await db.refresh(requirement)
+
+    return RequirementSchema.model_validate(requirement)
+
+
+@router.get("/{project_id}/tasks")
+async def get_project_tasks(
+    project_id: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    status: Optional[str] = None,
+    assignee_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    async with async_session_maker() as session:
+        query = select(Task).where(Task.project_id == project_id)
+
+        if status:
+            query = query.where(Task.status == status)
+        if assignee_id:
+            query = query.where(Task.assignee_id == assignee_id)
+
+        query = query.order_by(Task.created_at.desc())
+
+        offset = (page - 1) * page_size
+        query = query.offset(offset).limit(page_size)
+
+        result = await session.execute(query)
+        tasks = result.scalars().all()
+
+        count_query = select(func.count(Task.id)).where(Task.project_id == project_id)
+        if status:
+            count_query = count_query.where(Task.status == status)
+        if assignee_id:
+            count_query = count_query.where(Task.assignee_id == assignee_id)
+        total_result = await session.execute(count_query)
+        total = total_result.scalar() or 0
+
+        return {
+            "items": [{
+                "id": t.id,
+                "req_id": t.req_id,
+                "step_idx": t.step_idx,
+                "title": t.title,
+                "project": t.project_id,
+                "feature": t.feature_id,
+                "status": t.status,
+                "assignee": t.assignee_name,
+                "assignee_id": t.assignee_id,
+                "priority": t.priority,
+                "due_date": t.due_date,
+                "comments": t.comments_count,
+            } for t in tasks],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
