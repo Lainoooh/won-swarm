@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FolderOpen, KanbanSquare, Settings,
-  Network, Bell, ChevronRight, PanelLeftClose, PanelLeftOpen
+  Bell, ChevronRight, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
+import { HiveMatrixLogo } from '../utils/Modal';
 
 const MainLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -51,8 +52,8 @@ const MainLayout = () => {
       {/* Sidebar */}
       <aside className={`${isSidebarCollapsed ? 'w-16' : 'w-48'} border-r border-white/60 bg-white/40 backdrop-blur-2xl flex flex-col z-30 shadow-sm transition-all duration-300 relative shrink-0`}>
         <div className={`h-10 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'px-3'} border-b border-white/40 relative shrink-0`}>
-          <div className="flex items-center gap-1.5 text-blue-600 overflow-hidden">
-            <Network size={18} className="animate-pulse stroke-[2.5] flex-shrink-0" />
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            <HiveMatrixLogo className="w-5 h-5 shrink-0" />
             {!isSidebarCollapsed && <span className="font-black text-sm tracking-tight text-slate-800 whitespace-nowrap">One<span className="text-blue-600">Swarm</span></span>}
           </div>
           <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className={`absolute ${isSidebarCollapsed ? '-right-2' : 'right-2'} top-1/2 -translate-y-1/2 bg-white/90 border border-white text-slate-400 hover:text-blue-600 rounded-full p-0.5 shadow-sm transition-all z-50`}>

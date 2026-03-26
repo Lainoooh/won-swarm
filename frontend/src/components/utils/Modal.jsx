@@ -8,6 +8,91 @@ import {
 } from 'lucide-react';
 import { RoleTag } from './Tags';
 
+// --- 蜂巢集群 Logo 组件 (Hive Matrix) ---
+export const HiveMatrixLogo = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,12 83,31 83,69 50,88 17,69 17,31" fill="none" stroke="#3b82f6" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="50" y1="50" x2="50" y2="12" stroke="#94a3b8" strokeWidth="2.5" strokeDasharray="4 3" opacity="0.6" />
+    <line x1="50" y1="50" x2="83" y2="69" stroke="#94a3b8" strokeWidth="2.5" strokeDasharray="4 3" opacity="0.6" />
+    <line x1="50" y1="50" x2="17" y2="69" stroke="#94a3b8" strokeWidth="2.5" strokeDasharray="4 3" opacity="0.6" />
+    <circle r="3" fill="#38bdf8">
+      <animateMotion dur="2.5s" repeatCount="indefinite" path="M 50,50 L 50,12 L 50,50" />
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.5s" repeatCount="indefinite" />
+    </circle>
+    <circle r="3" fill="#38bdf8">
+      <animateMotion dur="2.5s" repeatCount="indefinite" path="M 50,50 L 83,69 L 50,50" />
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.5s" repeatCount="indefinite" />
+    </circle>
+    <circle r="3" fill="#38bdf8">
+      <animateMotion dur="2.5s" repeatCount="indefinite" path="M 50,50 L 17,69 L 50,50" />
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.5s" repeatCount="indefinite" />
+    </circle>
+    <circle cx="50" cy="50" r="14" fill="#0ea5e9">
+       <animate attributeName="r" values="12;16;12" dur="2.5s" keyTimes="0;0.5;1" repeatCount="indefinite" />
+    </circle>
+    <circle cx="50" cy="12" r="6" fill="#3b82f6">
+      <animate attributeName="r" values="4;8;4" dur="2.5s" keyTimes="0;0.5;1" repeatCount="indefinite" />
+    </circle>
+    <circle cx="83" cy="69" r="6" fill="#3b82f6">
+      <animate attributeName="r" values="4;8;4" dur="2.5s" keyTimes="0;0.5;1" repeatCount="indefinite" />
+    </circle>
+    <circle cx="17" cy="69" r="6" fill="#3b82f6">
+      <animate attributeName="r" values="4;8;4" dur="2.5s" keyTimes="0;0.5;1" repeatCount="indefinite" />
+    </circle>
+  </svg>
+);
+
+// --- 御剑晶虾踏剑版 Logo 组件 (CrystalCrawfishSurf) - 方案 5 ---
+export const CrystalCrawfishSurfLogo = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} overflow="visible" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sword-left3" x1="100%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#bae6fd" /><stop offset="100%" stopColor="#f0f9ff" />
+      </linearGradient>
+      <linearGradient id="sword-right3" x1="100%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#0ea5e9" /><stop offset="100%" stopColor="#0284c7" />
+      </linearGradient>
+      <filter id="sword-glow3" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0; 0 -2.5; 0 0" dur="2s" repeatCount="indefinite" />
+      <g transform="translate(50 86) scale(0.55) rotate(28) translate(-50 -50)">
+        <polygon points="10,90 20,60 70,30 40,80" fill="#38bdf8" filter="url(#sword-glow3)" opacity="0.5" />
+        <polygon points="10,90 20,60 65,25 70,30 30,70" fill="url(#sword-left3)" />
+        <polygon points="10,90 30,70 70,30 75,35 40,80" fill="url(#sword-right3)" />
+        <line x1="10" y1="90" x2="70" y2="30" stroke="#ffffff" strokeWidth="2.5" opacity="0.9" />
+        <polygon points="62,22 78,38 82,34 66,18" fill="#0284c7" stroke="#fff" strokeWidth="1" />
+        <polygon points="62,22 70,30 74,26 66,18" fill="#38bdf8" />
+        <polygon points="68,28 72,32 87,17 83,13" fill="#1e3a8a" />
+        <line x1="70" y1="30" x2="85" y2="15" stroke="#3b82f6" strokeWidth="1.5" />
+        <polygon points="85,15 90,20 95,15 90,10" fill="#fff" filter="url(#sword-glow3)" />
+        <polygon points="85,15 90,20 92,17 87,12" fill="#38bdf8" />
+        <path d="M -2 78 Q 4 96 22 102" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" filter="url(#sword-glow3)" opacity="0">
+          <animate attributeName="opacity" values="0;0.9;0" dur="0.8s" repeatCount="indefinite" />
+          <animateTransform attributeName="transform" type="translate" values="5 -5; -8 8" dur="0.8s" repeatCount="indefinite" />
+        </path>
+        <path d="M 2 82 Q 7 93 18 98" fill="none" stroke="#7dd3fc" strokeWidth="2" strokeLinecap="round" opacity="0">
+          <animate attributeName="opacity" values="0;0.6;0" dur="0.8s" begin="0.1s" repeatCount="indefinite" />
+          <animateTransform attributeName="transform" type="translate" values="5 -5; -6 6" dur="0.8s" begin="0.1s" repeatCount="indefinite" />
+        </path>
+      </g>
+      <g transform="translate(50 44) scale(0.85) rotate(-3) translate(-50 -50)">
+        <polygon points="50,95 40,80 60,80" fill="#0284c7" />
+        <polygon points="35,78 65,78 68,60 32,60" fill="#0ea5e9" />
+        <polygon points="30,58 70,58 75,25 50,15 25,25" fill="#38bdf8" />
+        <path d="M 22 35 C 5 15 5 45 15 65 C 20 45 30 40 30 40 Z" fill="#2563eb" />
+        <path d="M 78 35 C 95 15 95 45 85 65 C 80 45 70 40 70 40 Z" fill="#2563eb" />
+        <polygon points="50,30 60,40 50,55 40,40" fill="#fff" opacity="0.9" className="animate-pulse" />
+        <polygon points="50,30 60,40 50,45" fill="#e0f2fe" />
+        <polygon points="50,30 40,40 50,45" fill="#bae6fd" />
+      </g>
+    </g>
+  </svg>
+);
+
 // --- Confirm Modal Component (通用二次确认弹窗) ---
 export const ConfirmModal = ({
   type = 'warning', // 'warning' | 'info' | 'danger'
@@ -92,7 +177,7 @@ export const ReqTypeSelect = ({ value, onChange, placeholder = '选择需求类�
     { value: 'bug', enumValue: 3, label: '缺陷修复', desc: 'Bug 修复' }
   ];
 
-  const selected = options.find(o => o.value === value);
+  const selected = options.find(o => useEnum ? o.enumValue === value : o.value === value);
 
   const sizeClass = size === 'small' ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1.5 text-xs';
 
@@ -176,7 +261,7 @@ export const PrioritySelect = ({ value, onChange, placeholder = '选择优先级
     { value: 'P3', enumValue: 4, label: 'P3', desc: '低优先级', color: 'text-slate-600 bg-slate-50' }
   ];
 
-  const selected = options.find(o => o.value === value);
+  const selected = options.find(o => useEnum ? o.enumValue === value : o.value === value);
 
   const sizeClass = size === 'small' ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1.5 text-xs';
 
@@ -542,19 +627,35 @@ export const CreateRequirementModal = ({ onClose, onSave, agents = [] }) => {
       // 需求类型枚举映射：1->new, 2->change, 3->bug
       const reqTypeMap = { 1: 'new', 2: 'change', 3: 'bug' };
 
+      // 检查是否所有阶段的 Agent 都是空的
+      const hasAnyAgent = Object.values(phaseAssignments).some(ids => ids && ids.length > 0);
+      if (!hasAnyAgent) {
+        // 如果没有选择任何 Agent，至少创建一个功能但不创建任务
+        console.warn('警告：没有为任何阶段选择 Agent，将只创建需求模块和功能，不创建任务');
+      }
+
+      // 构建要发送的数据
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        features: features.filter(f => selectedFeatureIds.has(f.id)).map(f => ({
+          title: f.name,
+          priority: priorityMap[f.priority] || 'P2',
+          req_type: reqTypeMap[f.reqType] || 'new',
+          description: f.desc,
+          phase_assignments: phaseAssignments
+        }))
+      };
+
+      console.log('=== CreateRequirementModal 提交数据 ===');
+      console.log('formData:', formData);
+      console.log('phaseAssignments:', phaseAssignments);
+      console.log('selectedFeatureIds:', Array.from(selectedFeatureIds));
+      console.log('payload:', JSON.stringify(payload, null, 2));
+
       // 调用 onSave 回调，传入完整的需求数据
       if (onSave) {
-        await onSave({
-          title: formData.title,
-          description: formData.description,
-          features: features.filter(f => selectedFeatureIds.has(f.id)).map(f => ({
-            title: f.name,
-            priority: priorityMap[f.priority] || 'P2',
-            req_type: reqTypeMap[f.reqType] || 'new',
-            description: f.desc,
-            phase_assignments: phaseAssignments
-          }))
-        });
+        await onSave(payload);
       }
       onClose();
     } catch (error) {
@@ -1025,10 +1126,20 @@ export const ModuleModal = ({ module, onClose, onSave }) => {
       return;
     }
     if (onSave) {
-      onSave({
-        ...formData,
-        parent_id: null
-      });
+      if (isEdit) {
+        // 编辑模式：只传递名称
+        onSave({
+          title: formData.title,
+          id: module?.id
+        });
+      } else {
+        // 创建模式：传递所有字段
+        onSave({
+          title: formData.title,
+          docs: formData.docs,
+          expanded: formData.expanded
+        });
+      }
     }
     onClose();
   };
@@ -1040,7 +1151,7 @@ export const ModuleModal = ({ module, onClose, onSave }) => {
       title={
         <div className="flex items-center gap-1.5">
           <Box size={14} className="text-indigo-600"/>
-          <span>{isEdit ? '编辑大纲模块' : '新增大纲模块'}</span>
+          <span>{isEdit ? '编辑模块' : '新增模块'}</span>
         </div>
       }
       onClose={onClose}
@@ -1067,29 +1178,48 @@ export const ModuleModal = ({ module, onClose, onSave }) => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 shrink-0">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-slate-500">附件数量</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.docs}
-              onChange={(e) => handleChange('docs', parseInt(e.target.value) || 0)}
-              className="w-full text-xs font-mono font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
-            />
+        {isEdit ? (
+          // 编辑模式：显示只读信息
+          <div className="grid grid-cols-2 gap-3 shrink-0">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-400">附件数量</label>
+              <div className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5">
+                {formData.docs}
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-400">展开状态</label>
+              <div className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5">
+                {formData.expanded ? '展开' : '收起'}
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-slate-500">默认展开</label>
-            <select
-              value={formData.expanded ? 'true' : 'false'}
-              onChange={(e) => handleChange('expanded', e.target.value === 'true')}
-              className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
-            >
-              <option value="true">是</option>
-              <option value="false">否</option>
-            </select>
+        ) : (
+          // 创建模式：可编辑
+          <div className="grid grid-cols-2 gap-3 shrink-0">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-500">附件数量</label>
+              <input
+                type="number"
+                min="0"
+                value={formData.docs}
+                onChange={(e) => handleChange('docs', parseInt(e.target.value) || 0)}
+                className="w-full text-xs font-mono font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-500">默认展开</label>
+              <select
+                value={formData.expanded ? 'true' : 'false'}
+                onChange={(e) => handleChange('expanded', e.target.value === 'true')}
+                className="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 shadow-sm"
+              >
+                <option value="true">是</option>
+                <option value="false">否</option>
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 shrink-0">
           <h4 className="text-[11px] font-bold text-indigo-700 mb-1.5 flex items-center gap-1.5">
@@ -1108,8 +1238,8 @@ export const ModuleModal = ({ module, onClose, onSave }) => {
 export const FeatureModal = ({ feature, module, onClose, onSave }) => {
   const isEdit = !!feature;
   const [formData, setFormData] = useState({
-    title: feature?.title || '',
-    reqType: feature?.reqType || 'new',
+    title: feature?.title || feature?.Title || '',
+    reqType: feature?.reqType || feature?.req_type || 'new',
     priority: feature?.priority || 'P1',
     description: feature?.description || ''
   });
@@ -1119,12 +1249,14 @@ export const FeatureModal = ({ feature, module, onClose, onSave }) => {
   };
 
   const handleSave = () => {
+    if (!formData.title) {
+      alert('请填写功能名称');
+      return;
+    }
     if (onSave) {
+      // 只传递名称，编辑模式下只允许修改名称
       onSave({
-        ...feature,
-        ...formData,
-        id: feature?.id || `FEAT-${Date.now()}`,
-        currentStep: feature?.currentStep || 0
+        title: formData.title
       });
     }
     onClose();
@@ -1164,22 +1296,41 @@ export const FeatureModal = ({ feature, module, onClose, onSave }) => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 shrink-0">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-slate-500">需求类型</label>
-            <ReqTypeSelect
-              value={formData.reqType}
-              onChange={(value) => handleChange('reqType', value)}
-            />
+        {isEdit ? (
+          // 编辑模式：显示只读信息
+          <div className="grid grid-cols-2 gap-3 shrink-0">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-400">需求类型</label>
+              <div className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5">
+                {formData.reqType === 'new' ? '新增需求' : formData.reqType === 'change' ? '变更需求' : '缺陷修复'}
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-400">优先级</label>
+              <div className="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded px-2.5 py-1.5">
+                {formData.priority}
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-bold text-slate-500">优先级</label>
-            <PrioritySelect
-              value={formData.priority}
-              onChange={(value) => handleChange('priority', value)}
-            />
+        ) : (
+          // 创建模式：可编辑
+          <div className="grid grid-cols-2 gap-3 shrink-0">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-500">需求类型</label>
+              <ReqTypeSelect
+                value={formData.reqType}
+                onChange={(value) => handleChange('reqType', value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-500">优先级</label>
+              <PrioritySelect
+                value={formData.priority}
+                onChange={(value) => handleChange('priority', value)}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-col gap-1 shrink-0">
           <label className="text-[10px] font-bold text-slate-500">所属模块</label>
@@ -1191,15 +1342,26 @@ export const FeatureModal = ({ feature, module, onClose, onSave }) => {
           />
         </div>
 
-        <div className="flex flex-col gap-1 shrink-0 flex-1">
-          <label className="text-[10px] font-bold text-slate-500">功能描述</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            className="w-full h-32 text-xs text-slate-800 bg-white border border-slate-200 rounded p-2.5 focus:outline-none focus:border-blue-400 resize-none custom-scrollbar shadow-sm"
-            placeholder="请输入功能详细描述..."
-          />
-        </div>
+        {isEdit ? (
+          // 编辑模式：显示只读描述
+          <div className="flex flex-col gap-1 shrink-0 flex-1">
+            <label className="text-[10px] font-bold text-slate-400">功能描述</label>
+            <div className="w-full h-32 text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded p-2.5 overflow-y-auto custom-scrollbar">
+              {formData.description || '暂无描述'}
+            </div>
+          </div>
+        ) : (
+          // 创建模式：可编辑描述
+          <div className="flex flex-col gap-1 shrink-0 flex-1">
+            <label className="text-[10px] font-bold text-slate-500">功能描述</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              className="w-full h-32 text-xs text-slate-800 bg-white border border-slate-200 rounded p-2.5 focus:outline-none focus:border-blue-400 resize-none custom-scrollbar shadow-sm"
+              placeholder="请输入功能详细描述..."
+            />
+          </div>
+        )}
       </div>
     </Modal>
   );
@@ -1219,7 +1381,13 @@ export const FeatureFlowModal = ({ feature, onClose, tasks = [], projectId }) =>
     setTaskList(tasks);
   }, [tasks]);
 
-  const featureTasks = taskList.filter(t => t.req_id === feature.id || t.reqId === feature.id);
+  const featureTasks = taskList.filter(t => {
+    // 首先过滤出该功能的任务
+    const isMatchReq = t.req_id === feature.id || t.reqId === feature.id;
+    if (!isMatchReq) return false;
+    // 根据当前查看的步骤过滤
+    return t.step_idx === viewedStepIdx || t.stepIdx === viewedStepIdx;
+  });
   const canOperate = viewedStepIdx === actualStepIdx;
 
   const steps = [

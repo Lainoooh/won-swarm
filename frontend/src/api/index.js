@@ -165,8 +165,8 @@ export async function createRequirement(projectId, data) {
 /**
  * 更新需求
  */
-export async function updateRequirement(reqId, data) {
-  return request(`/requirements/${reqId}`, {
+export async function updateRequirement(reqId, projectId, data) {
+  return request(`/projects/${projectId}/requirements/${reqId}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
@@ -175,17 +175,38 @@ export async function updateRequirement(reqId, data) {
 /**
  * 删除需求
  */
-export async function deleteRequirement(reqId) {
-  return request(`/requirements/${reqId}`, {
+export async function deleteRequirement(reqId, projectId) {
+  return request(`/projects/${projectId}/requirements/${reqId}`, {
     method: 'DELETE',
   });
 }
 
 /**
+ * 创建需求大纲（模块）带功能点和任务
+ */
+export async function createRequirementModule(projectId, data) {
+  return request(`/projects/${projectId}/requirements/module`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 创建任务
+ */
+export async function createTask(projectId, data) {
+  return request(`/projects/${projectId}/tasks`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+
  * 需求操作 (cancel/pause/advance/complete)
  */
-export async function requirementAction(reqId, action) {
-  return request(`/requirements/${reqId}/action`, {
+export async function requirementAction(reqId, projectId, action) {
+  return request(`/projects/${projectId}/requirements/${reqId}/action`, {
     method: 'POST',
     body: JSON.stringify({ action }),
   });

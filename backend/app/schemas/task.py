@@ -36,17 +36,31 @@ class TaskSchema(BaseModel):
     req_id: str
     step_idx: int
     title: str
-    project: str
-    feature: Optional[str] = None
+    description: Optional[str] = ""
+    project_id: str
+    feature_id: Optional[str] = None
     status: str
     assignee: Optional[str] = None
     assignee_id: Optional[str] = None
+    assignee_name: Optional[str] = None
     priority: str
     due_date: Optional[date] = None
-    comments: int
+    comments: int = 0
 
     class Config:
         from_attributes = True
+        extra = "ignore"
+
+    @classmethod
+    def model_validate(cls, obj):
+        # 手动映射 comments_count -> comments
+        data = {key: getattr(obj, key) for key in cls.model_fields.keys() if hasattr(obj, key)}
+        if hasattr(obj, 'comments_count'):
+            data['comments'] = obj.comments_count
+        # 处理 assignee_name -> assignee 映射
+        if not data.get('assignee') and data.get('assignee_name'):
+            data['assignee'] = data['assignee_name']
+        return cls(**data)
 
 
 class TaskListResponse(BaseModel):

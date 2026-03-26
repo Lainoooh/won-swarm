@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge, PriorityTag, ReqTypeTag } from '../components/utils/Tags';
 import { FeatureFlowModal, AttachmentModal, CreateRequirementModal, ModuleModal, FeatureModal, ConfirmModal } from '../components/utils/Modal';
-import { getProjects, getRequirementsTree, createRequirement, updateRequirement, deleteRequirement, requirementAction, getAgents } from '../api';
+import { getProjects, getRequirementsTree, createRequirement, updateRequirement, deleteRequirement, requirementAction, getAgents, createRequirementModule, getProjectTasks } from '../api';
 
 const RequirementTree = () => {
   const { projectId } = useParams();
@@ -19,6 +19,7 @@ const RequirementTree = () => {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFeature, setActiveFeature] = useState(null);
+  const [activeFeatureTasks, setActiveFeatureTasks] = useState([]);
   const [activeAttachment, setActiveAttachment] = useState(null);
   const [showCreateReqModal, setShowCreateReqModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
@@ -31,6 +32,7 @@ const RequirementTree = () => {
   // 确认弹窗状态
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState({});
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -76,42 +78,51 @@ const RequirementTree = () => {
 
   // 处理创建需求
   const handleCreateRequirement = async (data) => {
+    console.log('=== 开始创建需求大纲 ===');
+    console.log('传入数据:', JSON.stringify(data, null, 2));
+
     try {
-      // 首先创建模块（需求大纲）
-      const moduleRes = await createRequirement(currentProject.id, {
+      // 调用统一的创建接口，后端会自动创建模块、功能和任务
+      const result = await createRequirementModule(currentProject.id, {
         project_id: currentProject.id,
         type: 'module',
-        parent_id: null,
         title: data.title,
-        description: data.description || ''
+        description: data.description,
+        features: data.features.map(f => ({
+          title: f.title,
+          description: f.description,
+          req_type: f.req_type,
+          priority: f.priority,
+          phase_assignments: f.phase_assignments
+        }))
       });
 
-      // 然后为每个功能创建子节点
-      if (data.features && data.features.length > 0) {
-        for (const feature of data.features) {
-          await createRequirement(currentProject.id, {
-            project_id: currentProject.id,
-            type: 'feature',
-            parent_id: moduleRes.id,
-            title: feature.title,
-            description: feature.description || '',
-            req_type: feature.req_type || 'new',
-            priority: feature.priority || 'P2'
-          });
-        }
-      }
+      console.log('需求大纲创建成功:', result);
 
       // 刷新需求树
       loadRequirements(currentProject.id);
       setShowCreateReqModal(false);
+      console.log('=== 创建完成 ===');
     } catch (error) {
+      console.error('创建失败:', error);
       alert('创建失败：' + error.message);
       throw error;
     }
   };
 
   const toggleNode = (id) => setTreeData(treeData.map(node => node.id === id ? { ...node, expanded: !node.expanded } : node));
-  const openFeatureModal = (feature) => setActiveFeature(feature);
+
+  const openFeatureModal = async (feature) => {
+    setActiveFeature(feature);
+    // 加载任务列表
+    try {
+      const tasksRes = await getProjectTasks(currentProject?.id, { page: 1, page_size: 100 });
+      setActiveFeatureTasks(tasksRes.items || []);
+    } catch (error) {
+      console.error('Failed to load tasks:', error);
+      setActiveFeatureTasks([]);
+    }
+  };
 
   // 通用确认弹窗处理
   const showConfirmModal = (config) => {
@@ -119,17 +130,23 @@ const RequirementTree = () => {
     setShowConfirm(true);
   };
 
-  const handleConfirm = () => {
-    if (confirmConfig.onConfirm) {
-      confirmConfig.onConfirm();
+  const handleConfirm = async () => {
+    setConfirmLoading(true);
+    try {
+      if (confirmConfig.onConfirm) {
+        await confirmConfig.onConfirm();
+      }
+      setShowConfirm(false);
+      setConfirmConfig({});
+    } finally {
+      setConfirmLoading(false);
     }
-    setShowConfirm(false);
-    setConfirmConfig({});
   };
 
   const handleCancel = () => {
     setShowConfirm(false);
     setConfirmConfig({});
+    setConfirmLoading(false);
   };
 
   // Module handlers
@@ -153,7 +170,7 @@ const RequirementTree = () => {
       confirmText: '确认删除',
       onConfirm: async () => {
         try {
-          await deleteRequirement(module.id);
+          await deleteRequirement(module.id, currentProject.id);
           loadRequirements(currentProject.id);
         } catch (error) {
           alert('删除失败：' + error.message);
@@ -164,19 +181,28 @@ const RequirementTree = () => {
 
   const handleSaveModule = async (moduleData) => {
     try {
-      await createRequirement(currentProject.id, {
-        type: 'module',
-        parent_id: null,
-        title: moduleData.title,
-        description: '',
-        docs_count: moduleData.docs || 0,
-        expanded: moduleData.expanded,
-        project_id: currentProject.id
-      });
+      if (editingModule) {
+        // 编辑模式：只更新名称
+        await updateRequirement(editingModule.id, currentProject.id, {
+          title: moduleData.title
+        });
+      } else {
+        // 创建模式
+        await createRequirement(currentProject.id, {
+          type: 'module',
+          parent_id: null,
+          title: moduleData.title,
+          description: '',
+          docs_count: moduleData.docs || 0,
+          expanded: moduleData.expanded,
+          project_id: currentProject.id
+        });
+      }
       loadRequirements(currentProject.id);
       setShowModuleModal(false);
       setEditingModule(null);
     } catch (error) {
+      console.error('保存失败:', error);
       alert('保存失败：' + error.message);
     }
   };
@@ -205,7 +231,7 @@ const RequirementTree = () => {
       confirmText: '确认删除',
       onConfirm: async () => {
         try {
-          await deleteRequirement(feature.id);
+          await deleteRequirement(feature.id, currentProject.id);
           loadRequirements(currentProject.id);
         } catch (error) {
           alert('删除失败：' + error.message);
@@ -217,15 +243,28 @@ const RequirementTree = () => {
   const handleSaveFeature = async (featureData) => {
     try {
       if (editingFeature) {
-        await updateRequirement(editingFeature.id, featureData);
+        // 编辑模式：只更新名称
+        await updateRequirement(editingFeature.id, currentProject.id, {
+          title: featureData.title
+        });
       } else {
-        await createRequirement(currentProject.id, { ...featureData, project_id: currentProject.id, parent_id: currentModule.id, type: 'feature' });
+        // 创建模式
+        await createRequirement(currentProject.id, {
+          type: 'feature',
+          project_id: currentProject.id,
+          parent_id: currentModule.id,
+          title: featureData.title,
+          description: featureData.description || '',
+          req_type: featureData.reqType,
+          priority: featureData.priority
+        });
       }
       loadRequirements(currentProject.id);
       setShowFeatureModal(false);
       setCurrentModule(null);
       setEditingFeature(null);
     } catch (error) {
+      console.error('保存失败:', error);
       alert('保存失败：' + error.message);
     }
   };
@@ -243,7 +282,7 @@ const RequirementTree = () => {
       confirmText: '确认取消',
       onConfirm: async () => {
         try {
-          await requirementAction(feature.id, 'cancel');
+          await requirementAction(feature.id, currentProject.id, 'cancel');
           loadRequirements(currentProject.id);
         } catch (error) {
           alert('操作失败：' + error.message);
@@ -260,7 +299,7 @@ const RequirementTree = () => {
       confirmText: '确认叫停',
       onConfirm: async () => {
         try {
-          await requirementAction(feature.id, 'pause');
+          await requirementAction(feature.id, currentProject.id, 'pause');
           loadRequirements(currentProject.id);
         } catch (error) {
           alert('操作失败：' + error.message);
@@ -277,7 +316,7 @@ const RequirementTree = () => {
       confirmText: '确认推进',
       onConfirm: async () => {
         try {
-          await requirementAction(feature.id, 'advance');
+          await requirementAction(feature.id, currentProject.id, 'advance');
           loadRequirements(currentProject.id);
         } catch (error) {
           alert('操作失败：' + error.message);
@@ -450,7 +489,7 @@ const RequirementTree = () => {
         </div>
       </div>
 
-      {activeFeature && <FeatureFlowModal feature={activeFeature} onClose={() => setActiveFeature(null)} tasks={[]} projectId={currentProject?.id} />}
+      {activeFeature && <FeatureFlowModal feature={activeFeature} onClose={() => setActiveFeature(null)} tasks={activeFeatureTasks} projectId={currentProject?.id} />}
       {activeAttachment && <AttachmentModal item={activeAttachment} onClose={() => setActiveAttachment(null)} />}
       {showCreateReqModal && <CreateRequirementModal onClose={() => setShowCreateReqModal(false)} onSave={handleCreateRequirement} agents={agents} />}
       {showModuleModal && (
@@ -483,8 +522,9 @@ const RequirementTree = () => {
           title={confirmConfig.title}
           message={confirmConfig.message}
           confirmText={confirmConfig.confirmText}
-          onConfirm={confirmConfig.onConfirm}
+          onConfirm={handleConfirm}
           onCancel={handleCancel}
+          confirmLoading={confirmLoading}
         />
       )}
     </div>

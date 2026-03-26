@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Search, Plus, CheckCircle2, X, Cpu, BrainCircuit, Gem,
+  Search, Plus, CheckCircle2, X, BrainCircuit, Gem,
   Copy, Check, Edit, Terminal, ChevronDown, RefreshCw
 } from 'lucide-react';
 import { StatusBadge, RoleTag } from '../components/utils/Tags';
 import { getAgents, createAgent, updateAgent, deleteAgent } from '../api';
+import { CrystalCrawfishSurfLogo } from '../components/utils/Modal';
 
 // --- 数字格式化 ---
 const formatNumber = (num) => {
@@ -265,8 +266,8 @@ const AgentList = () => {
               <div key={ag.id} className="bg-white border border-slate-200 hover:border-blue-300 rounded-xl p-2.5 shadow-sm hover:shadow-md transition-all flex flex-col relative group min-h-[135px]">
                 <div className="flex justify-between items-start mb-2.5">
                   <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-500 border border-blue-100 flex items-center justify-center shrink-0 shadow-sm">
-                      <Cpu size={14} />
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                      <CrystalCrawfishSurfLogo className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-[11px] font-black text-slate-800 truncate leading-tight">{ag.name}</span>
