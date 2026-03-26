@@ -5,6 +5,7 @@ import AgentList from '../pages/AgentList';
 import ProjectList from '../pages/ProjectList';
 import RequirementTree from '../pages/RequirementTree';
 import TaskKanban from '../pages/TaskKanban';
+import Settings from '../pages/Settings';
 
 export const router = createBrowserRouter([
   {
@@ -37,7 +38,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'settings',
-        element: <div className="flex items-center justify-center h-full text-slate-500 text-sm">系统设置页面（待开发）</div>
+        element: <Settings />
       }
     ]
   }
