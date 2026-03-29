@@ -9,16 +9,18 @@ import '../../styles/cyberpunk-theme.css';
 
 const MainLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [theme, setTheme] = useState('azure');
   const location = useLocation();
 
-  // 从 localStorage 加载主题偏好
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme && (savedTheme === 'azure' || savedTheme === 'cyberpunk')) {
-      setTheme(savedTheme);
+  // 从 localStorage 加载主题偏好，使用 initState 避免闪烁
+  const [theme, setTheme] = useState(() => {
+    if (typeof localStorage !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme && (savedTheme === 'azure' || savedTheme === 'cyberpunk')) {
+        return savedTheme;
+      }
     }
-  }, []);
+    return 'azure';
+  });
 
   // 保存主题偏好到 localStorage
   useEffect(() => {
@@ -122,7 +124,7 @@ const MainLayout = () => {
         <div className={`h-10 flex items-center ${isSidebarCollapsed ? 'justify-center' : 'px-3'} border-b border-white/40 relative shrink-0`}>
           <div className="flex items-center gap-1.5 overflow-hidden">
             <HiveMatrixLogo className="w-5 h-5 shrink-0" />
-            {!isSidebarCollapsed && <span className="font-black text-sm tracking-tight text-slate-800 whitespace-nowrap">One<span className="text-blue-600">Swarm</span></span>}
+            {!isSidebarCollapsed && <span className="font-black text-sm tracking-tight whitespace-nowrap"><span className="text-white">One</span><span className="text-blue-600">Swarm</span></span>}
           </div>
           <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className={`absolute ${isSidebarCollapsed ? '-right-2' : 'right-2'} top-1/2 -translate-y-1/2 bg-white/90 border border-white text-slate-400 hover:text-blue-600 rounded-full p-0.5 shadow-sm transition-all z-50`}>
             {isSidebarCollapsed ? <PanelLeftOpen size={10} /> : <PanelLeftClose size={10} />}
@@ -139,7 +141,7 @@ const MainLayout = () => {
                   key={item.id}
                   to={item.id}
                   title={isSidebarCollapsed ? item.label : ''}
-                  className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-2 px-2'} py-1.5 rounded-md transition-all duration-200 text-xs font-bold ${isActive ? 'bg-white/80 text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-white/50'}`}
+                  className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-2 px-2'} py-1.5 rounded-md transition-all duration-200 text-xs font-bold nav-btn ${isActive ? 'bg-white/80 text-blue-700 shadow-sm nav-active' : 'text-slate-500 hover:bg-white/50'}`}
                 >
                   <NavIcon size={14} strokeWidth={isActive ? 2.5 : 2} className="flex-shrink-0" />
                   {!isSidebarCollapsed && <span>{item.label}</span>}

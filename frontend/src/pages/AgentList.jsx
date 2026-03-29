@@ -121,9 +121,9 @@ const AgentFormModal = ({ agent, onClose, onSave }) => {
               </div>
 
               {isRolesOpen && (
-                <div className="absolute top-[105%] left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto p-1.5 custom-scrollbar">
+                <div className="absolute top-[105%] left-0 w-full bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto p-1.5 custom-scrollbar agent-roles-dropdown">
                   {roleOptions.map(option => (
-                    <label key={option.value} className={`flex items-center gap-3 p-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors ${selectedRoles.includes(option.value) ? 'bg-blue-50/50' : ''}`}>
+                    <label key={option.value} className={`flex items-center gap-3 p-2.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors agent-role-option ${selectedRoles.includes(option.value) ? 'bg-blue-50/50 agent-role-selected' : ''}`}>
                       <input
                         type="checkbox"
                         className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer shadow-sm"
@@ -263,14 +263,14 @@ const AgentList = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 flex-1 content-start">
             {filteredAgents.map(ag => (
-              <div key={ag.id} className="bg-white border border-slate-200 hover:border-blue-300 rounded-xl p-2.5 shadow-sm hover:shadow-md transition-all flex flex-col relative group min-h-[135px]">
+              <div key={ag.id} className="bg-white border border-slate-200 hover:border-blue-300 rounded-xl p-2.5 shadow-sm hover:shadow-md transition-all flex flex-col relative group min-h-[135px] agent-card">
                 <div className="flex justify-between items-start mb-2.5">
                   <div className="flex items-center gap-2 overflow-hidden">
                     <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
                       <CrystalCrawfishSurfLogo className="w-5 h-5" />
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[11px] font-black text-slate-800 truncate leading-tight">{ag.name}</span>
+                      <span className="text-[11px] font-black text-slate-800 truncate leading-tight agent-name">{ag.name}</span>
                       <span className="text-[9px] font-mono text-slate-400 flex items-center gap-0.5 mt-0.5 truncate"><BrainCircuit size={9}/>{ag.model}</span>
                     </div>
                   </div>
@@ -281,15 +281,15 @@ const AgentList = () => {
 
                 <div className="grid grid-cols-2 gap-2 mb-2.5">
                    <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-100 rounded-lg py-1.5 shadow-sm">
-                     <span className="text-[8px] font-bold text-slate-400 mb-0.5">Tokens</span>
-                     <span className="font-mono text-[11px] font-bold text-slate-700 leading-none">{formatNumber(ag.tokens)}</span>
+                     <span className="text-[8px] font-bold text-slate-400 mb-0.5 agent-label">Tokens</span>
+                     <span className="font-mono text-[11px] font-bold text-slate-700 leading-none agent-value">{formatNumber(ag.tokens)}</span>
                    </div>
                    <div className="flex flex-col items-center justify-center bg-cyan-50/50 border border-cyan-100 rounded-lg py-1.5 shadow-sm relative overflow-hidden">
                      <div className="absolute inset-0 bg-cyan-400/10 blur-md"></div>
                      <span className="text-[8px] font-bold text-cyan-600/80 mb-0.5 flex items-center gap-1 z-10">
                        <Gem size={8} className="text-cyan-500 fill-cyan-100"/> 鳞石
                      </span>
-                     <span className="font-mono text-[11px] font-bold text-cyan-700 leading-none z-10">{formatNumber(ag.linshi)}</span>
+                     <span className="font-mono text-[11px] font-bold text-cyan-700 leading-none z-10 agent-linshi">{formatNumber(ag.linshi)}</span>
                    </div>
                 </div>
 
@@ -306,7 +306,7 @@ const AgentList = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-1 mt-auto border-t border-slate-100 pb-2">
-                   <div className="flex items-end gap-1">
+                   <div className="flex items-end gap-1 agent-roles-container">
                      {ag.roles.length > 0 ? (
                        <>
                          <RoleTag role={ag.roles[0]} />
