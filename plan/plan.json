@@ -1,0 +1,12 @@
+{
+  "plans": [
+    {
+      "name": "WonSwarm UI 开发规范",
+      "description": "WonSwarm 项目前端 UI 开发规范总览，包含页面容器、Agent 卡片布局、组件样式、间距标准、字体大小等",
+      "file": "wonswarm_ui_standard.md",
+      "created": "2026-03-23",
+      "updated": "2026-03-23",
+      "tags": ["ui", "layout", "spacing", "components", "agent", "规范", "字体"]
+    }
+  ]
+}

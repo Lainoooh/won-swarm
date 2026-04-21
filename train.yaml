@@ -1,0 +1,69 @@
+### 早停配置
+### model
+model_name_or_path: /data/models/Qwen3-32B  # 含义：基座模型路径，本地路径或 Hugging Face / ModelScope 路径。
+trust_remote_code: true  # 含义：允许执行模型仓库里的自定义代码。
+
+### method
+stage: sft                        # 含义：训练阶段，sft = supervised fine-tuning。
+do_train: true                    # 含义：执行训练。
+finetuning_type: lora             # 含义：微调方式，lora / freeze / full 三选一。
+lora_rank: 8                      # 含义：LoRA 的秩 r，越大可训练参数越多。8 是官方默认值
+lora_alpha: 16                    # 含义：LoRA 缩放系数，官方文档建议通常为 lora_rank * 2。
+lora_dropout: 0.05                # 含义：LoRA dropout。小数据/过拟合风险时 0.05 常见；如果数据很多且想更强拟合，也可试 0。
+lora_target: all                  # 含义：对哪些模块打 LoRA，all 表示所有可适配模块。 对 Qwen3 做通用指令/格式 SFT，这是最省心的标准配置。
+gradient_checkpointing: true      # 含义：梯度检查点，省显存但会变慢。32B + ZeRO-3 场景非常常见。
+
+### dataset
+dataset: qwen_32b_inquiry_train_0 # 含义：dataset_info.json 中定义的数据集名字。
+template: qwen3_nothink
+# 选择规则：
+# - 如果你的标注数据不包含 reasoning / think 风格，优先 qwen3_nothink
+# - 如果你的数据本来就是 reasoning 风格，再用 qwen3
+# 关键点：训练和推理必须完全一致。
+
+cutoff_len: 2048                  # 含义：最大输入 token 长度，超出会截断。如果问询场景经常长于 2048 token，再考虑提高，但显存会明显上涨。
+overwrite_cache: true             # 含义：重建数据预处理缓存。
+preprocessing_num_workers: 16     # 含义：数据预处理进程数。按 CPU 核数微调。一般 8~32 都常见，太大不一定更快。
+
+dataloader_num_workers: 8         # 含义：DataLoader 取数 worker 数。如果 CPU 富余、数据读取慢，可试 8；如果偶发卡死，再降到 2 或 0。
+
+### train
+per_device_train_batch_size: 4    # 含义：每张卡每步的训练 batch。
+gradient_accumulation_steps: 1    # 含义：梯度累计步数。全局 batch = per_device_train_batch_size × GPU数 × gradient_accumulation_steps。如果是 8 卡，则全局 batch = 4 × 8 × 1 = 32
+per_device_eval_batch_size: 4     # 含义：每张卡评估 batch。如果评估时 OOM，优先先降这个，不要先动训练 batch。
+learning_rate: 8.0e-5             # 含义：初始学习率。
+num_train_epochs: 20.0            # 含义：训练轮数。有 val + early stopping 的情况下，epoch 上限设大一些是合理的。
+
+lr_scheduler_type: cosine         # 含义：学习率调度器。LLaMA-Factory 官方示例常用 cosine。
+warmup_ratio: 0.1                 # 含义：warmup 占总训练步数比例。0.1 是很常见的稳妥值。
+max_grad_norm: 1.0                # 含义：梯度裁剪阈值。1.0 是标准值。
+fp16: true                        # - V100 只支持 fp16
+bf16: false                       # - 如果你的卡稳定支持 bf16（如 A100/H100/较新架构），优先 bf16
+ddp_timeout: 180000000            # 含义：分布式初始化超时时间。大模型多卡训练常见值
+resume_from_checkpoint: null      # 含义：是否从某个 checkpoint 继续训练。null为重新开始训练
+
+
+### eval
+val_size: 0.1                     # 含义：从训练集切 10% 作为验证集。
+eval_strategy: steps              # 含义：按 step 做评估。
+eval_steps: 25                    # 含义：每多少个 step 做一次评估。
+save_strategy: steps              # 含义：按 step 保存 checkpoint。且应与 eval_strategy 保持一致。
+save_steps: 25                    # 含义：每多少个 step 保存一次 checkpoint。并建议与 eval_steps 保持一致。
+
+load_best_model_at_end: true      # 含义：训练结束后自动回载验证指标最优 checkpoint。
+metric_for_best_model: eval_loss  # 含义：用哪个验证指标判定“最好模型”。
+greater_is_better: false          # 含义：指标越大越好还是越小越好。false代表 eval_loss 越小越好。
+
+early_stopping_steps: 3           # 含义：若连续 3 次评估没有改善，则触发早停。
+save_total_limit: 3               # 含义：最多保留多少个 checkpoint。
+
+deepspeed: "/data/LLaMA-Factory/bjs/32b_cot_0207/ds_z3_v100.json"       # 含义：DeepSpeed 配置文件路径。
+
+
+### output
+output_dir: /data/LLaMA-Factory/bjs/32b_cot_0207/sft/Qwen3-32B-sft-inquiry-0      # 含义：训练输出目录。
+logging_steps: 5                  # 含义：每多少 step 打一次日志。
+plot_loss: true                   # 含义：保存 loss 曲线。
+overwrite_output_dir: true        # 含义：覆盖已有输出目录。
+save_only_model: false            # 含义：false不只保存模型，还保存 trainer state / optimizer state 等。
+report_to: none                   # 含义：none不把实验上报到 wandb / tensorboard / mlflow 等平台。

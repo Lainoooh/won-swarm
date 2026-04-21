@@ -1,0 +1,487 @@
+/**
+ * 霓虹深渊主题 (Neon Cyberpunk Theme)
+ * 独立主题文件，不影响原有蔚蓝晶透主题
+ * 使用方式：在根容器添加 class="theme-cyberpunk"
+ */
+
+/* ===== 基础覆盖 ===== */
+.theme-cyberpunk {
+  background-color: #020617;
+  color: #e2e8f0;
+}
+
+.theme-cyberpunk .bg-white\/40,
+.theme-cyberpunk .bg-white\/70,
+.theme-cyberpunk .bg-white\/80,
+.theme-cyberpunk .bg-white\/30,
+.theme-cyberpunk .bg-white\/60,
+.theme-cyberpunk .bg-white\/50,
+.theme-cyberpunk .bg-white\/20 {
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  border-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+.theme-cyberpunk .bg-white\/90,
+.theme-cyberpunk .bg-white\/95 {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+.theme-cyberpunk .bg-slate-50\/50,
+.theme-cyberpunk .bg-slate-50\/30 {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+}
+
+.theme-cyberpunk .bg-white {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.theme-cyberpunk .bg-slate-50 {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.theme-cyberpunk .bg-slate-100 {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+
+.theme-cyberpunk .text-slate-800,
+.theme-cyberpunk .text-slate-700 {
+  color: #f8fafc !important;
+}
+
+.theme-cyberpunk .text-slate-600,
+.theme-cyberpunk .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+.theme-cyberpunk .text-slate-400 {
+  color: #64748b !important;
+}
+
+.theme-cyberpunk .text-blue-600,
+.theme-cyberpunk .text-blue-700 {
+  color: #06b6d4 !important;
+}
+
+.theme-cyberpunk .bg-blue-600 {
+  background-color: #0891b2 !important;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.6) !important;
+}
+
+.theme-cyberpunk .hover\:bg-blue-700:hover {
+  background-color: #0e7490 !important;
+}
+
+.theme-cyberpunk .bg-blue-50,
+.theme-cyberpunk .bg-blue-50\/80,
+.theme-cyberpunk .bg-blue-50\/50 {
+  background-color: rgba(6, 182, 212, 0.1) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+  color: #22d3ee !important;
+}
+
+.theme-cyberpunk .border-blue-200,
+.theme-cyberpunk .border-blue-100 {
+  border-color: #164e63 !important;
+}
+
+.theme-cyberpunk .border-slate-200,
+.theme-cyberpunk .border-slate-100,
+.theme-cyberpunk .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+.theme-cyberpunk .border-white\/60,
+.theme-cyberpunk .border-white\/40,
+.theme-cyberpunk .border-white\/80,
+.theme-cyberpunk .border-white {
+  border-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+.theme-cyberpunk input,
+.theme-cyberpunk select,
+.theme-cyberpunk textarea {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #22d3ee !important;
+}
+
+.theme-cyberpunk input:focus,
+.theme-cyberpunk select:focus,
+.theme-cyberpunk textarea:focus {
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 0 1px #06b6d4 !important;
+}
+
+.theme-cyberpunk svg polygon[stroke="#3b82f6"] {
+  stroke: #06b6d4 !important;
+  filter: drop-shadow(0 0 4px rgba(6, 182, 212, 0.8));
+}
+
+.theme-cyberpunk svg circle[fill="#0ea5e9"] {
+  fill: #22d3ee !important;
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.8));
+}
+
+.theme-cyberpunk svg circle[fill="#38bdf8"],
+.theme-cyberpunk svg circle[fill="#3b82f6"] {
+  fill: #67e8f9 !important;
+}
+
+/* ===== 侧边栏与顶部光晕强化 ===== */
+.theme-cyberpunk aside.cyber-aside {
+  border-right: 1px solid rgba(6, 182, 212, 0.6) !important;
+  box-shadow: 2px 0 15px rgba(6, 182, 212, 0.2) !important;
+}
+
+.theme-cyberpunk header.cyber-header {
+  border-bottom: 1px solid rgba(6, 182, 212, 0.6) !important;
+  box-shadow: 0 2px 15px rgba(6, 182, 212, 0.2) !important;
+}
+
+.theme-cyberpunk .cyber-modal {
+  border: 1px solid #06b6d4 !important;
+  box-shadow: 0 0 40px rgba(6, 182, 212, 0.4), inset 0 0 20px rgba(6, 182, 212, 0.15) !important;
+}
+
+.theme-cyberpunk .cyber-modal-header {
+  border-bottom: 1px solid rgba(6, 182, 212, 0.6) !important;
+  background: rgba(6, 182, 212, 0.1) !important;
+}
+
+.theme-cyberpunk .cyber-modal-footer {
+  border-top: 1px solid rgba(6, 182, 212, 0.6) !important;
+  background: rgba(6, 182, 212, 0.05) !important;
+}
+
+/* ===== 导航栏 Hover 效果 ===== */
+.theme-cyberpunk .nav-btn:hover {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.2) 0%, transparent 100%) !important;
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+  box-shadow: inset 2px 0 0 0 #06b6d4 !important;
+}
+
+/* ===== 导航栏 Active 效果 ===== */
+.theme-cyberpunk .nav-active {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.3) 0%, rgba(6, 182, 212, 0.05) 100%) !important;
+  border-left: 3px solid #06b6d4 !important;
+  border-radius: 0 6px 6px 0 !important;
+  color: #67e8f9 !important;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+  box-shadow: inset 4px 0 0 0 #06b6d4, inset 0 0 15px rgba(6, 182, 212, 0.2) !important;
+}
+
+.theme-cyberpunk .settings-tab-active {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.3) 0%, rgba(6, 182, 212, 0.05) 100%) !important;
+  border: 1px solid rgba(6, 182, 212, 0.5) !important;
+  border-left: 3px solid #06b6d4 !important;
+  color: #67e8f9 !important;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+  box-shadow: inset 4px 0 0 0 #06b6d4, inset 0 0 15px rgba(6, 182, 212, 0.2) !important;
+}
+
+/* ===== 灰色分割线转霓虹色 ===== */
+.theme-cyberpunk .border-slate-200,
+.theme-cyberpunk .border-slate-200\/60,
+.theme-cyberpunk .border-slate-200\/50,
+.theme-cyberpunk .border-slate-300,
+.theme-cyberpunk .border-slate-300\/40,
+.theme-cyberpunk .border-slate-100 {
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+.theme-cyberpunk .bg-slate-300,
+.theme-cyberpunk .bg-slate-200,
+.theme-cyberpunk .bg-slate-200\/60,
+.theme-cyberpunk .bg-slate-200\/50 {
+  background-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+/* ===== 内部面板边框光晕 ===== */
+.theme-cyberpunk .border-white\/60,
+.theme-cyberpunk .border-white\/40,
+.theme-cyberpunk .border-white\/80,
+.theme-cyberpunk .border-white {
+  border-color: rgba(6, 182, 212, 0.5) !important;
+  box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.1), 0 0 10px rgba(6, 182, 212, 0.15) !important;
+}
+
+/* ===== 表格行 Hover ===== */
+.theme-cyberpunk tr.hover\:bg-white\/60:hover {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.2) 0%, rgba(6, 182, 212, 0.05) 100%) !important;
+}
+
+.theme-cyberpunk tr.hover\:bg-white\/60:hover td:first-child {
+  box-shadow: inset 3px 0 0 0 #06b6d4, inset 0 0 15px rgba(6, 182, 212, 0.1) !important;
+}
+
+.theme-cyberpunk tr.hover\:bg-white\/60:hover .text-slate-800,
+.theme-cyberpunk tr.hover\:bg-white\/60:hover .text-blue-600 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+}
+
+.theme-cyberpunk tr.hover\:bg-white\/60:hover .text-slate-400 {
+  color: #a5f3fc !important;
+}
+
+/* ===== 蓝色背景 Hover ===== */
+.theme-cyberpunk .hover\:bg-blue-50\/80:hover {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.25) 0%, rgba(6, 182, 212, 0.05) 100%) !important;
+  box-shadow: inset 2px 0 0 0 #06b6d4, inset 0 0 15px rgba(6, 182, 212, 0.15) !important;
+}
+
+.theme-cyberpunk .hover\:bg-blue-50\/80:hover .text-slate-800,
+.theme-cyberpunk .hover\:bg-blue-50\/80:hover .text-slate-700 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+}
+
+.theme-cyberpunk .bg-blue-50\/80 {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.3) 0%, rgba(6, 182, 212, 0.1) 100%) !important;
+  border-color: rgba(6, 182, 212, 0.5) !important;
+  box-shadow: inset 4px 0 0 0 #06b6d4, inset 0 0 20px rgba(6, 182, 212, 0.2) !important;
+}
+
+.theme-cyberpunk .bg-blue-50\/80 .text-slate-800,
+.theme-cyberpunk .bg-blue-50\/80 .text-slate-700,
+.theme-cyberpunk .bg-blue-50\/80 .text-slate-600,
+.theme-cyberpunk .bg-blue-50\/80 .text-blue-700,
+.theme-cyberpunk .bg-blue-50\/80 .truncate {
+  color: #67e8f9 !important;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+}
+
+.theme-cyberpunk .bg-blue-50\/80 .bg-blue-500 {
+  background-color: #06b6d4 !important;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.8) !important;
+}
+
+/* ===== 边框 Hover ===== */
+.theme-cyberpunk .hover\:border-blue-300:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.8) !important;
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.3), inset 0 0 20px rgba(6, 182, 212, 0.2) !important;
+}
+
+.theme-cyberpunk .hover\:border-blue-300:hover .text-slate-800 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+
+.theme-cyberpunk .hover\:border-blue-200:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.6) !important;
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 15px rgba(6, 182, 212, 0.15) !important;
+}
+
+.theme-cyberpunk .hover\:border-blue-200:hover .text-slate-800 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 6px rgba(34, 211, 238, 0.3);
+}
+
+/* ===== 滚动条深色化 ===== */
+.theme-cyberpunk .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.8);
+}
+
+.theme-cyberpunk .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.6);
+}
+
+/* ===== 项目列表 Hover - 白色背景 ===== */
+.theme-cyberpunk .hover\:bg-white\/50:hover,
+.theme-cyberpunk .hover\:bg-white\/60:hover {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.2) 0%, rgba(6, 182, 212, 0.05) 100%) !important;
+  box-shadow: inset 2px 0 0 0 #06b6d4, inset 0 0 15px rgba(6, 182, 212, 0.1) !important;
+}
+
+.theme-cyberpunk .hover\:bg-white\/50:hover .text-slate-700,
+.theme-cyberpunk .hover\:bg-white\/60:hover .text-slate-700 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 6px rgba(34, 211, 238, 0.4);
+}
+
+/* ===== 项目列表 Hover - 灰色背景 ===== */
+.theme-cyberpunk .hover\:bg-slate-50\/50:hover {
+  background: linear-gradient(90deg, rgba(6, 182, 212, 0.15) 0%, rgba(6, 182, 212, 0.03) 100%) !important;
+}
+
+.theme-cyberpunk .hover\:bg-slate-50\/50:hover .text-blue-600 {
+  color: #06b6d4 !important;
+  text-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+}
+
+.theme-cyberpunk .hover\:bg-slate-50\/50:hover .group-hover\:text-blue-700 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+}
+
+/* ===== 任务看板卡片 Hover ===== */
+.theme-cyberpunk .hover\:border-blue-200:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.6) !important;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4), inset 0 0 20px rgba(6, 182, 212, 0.15) !important;
+}
+
+.theme-cyberpunk .hover\:border-blue-200:hover .text-slate-800,
+.theme-cyberpunk .hover\:border-blue-200:hover .text-slate-700 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 6px rgba(34, 211, 238, 0.3);
+}
+
+/* ===== Agent 卡片 Hover ===== */
+.theme-cyberpunk .hover\:border-blue-300:hover,
+.theme-cyberpunk .hover\:shadow-md:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.8) !important;
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.3), inset 0 0 20px rgba(6, 182, 212, 0.2) !important;
+}
+
+.theme-cyberpunk .hover\:border-blue-300:hover .text-slate-800 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+
+/* ===== 下拉选项 Hover ===== */
+.theme-cyberpunk .hover\:bg-slate-50:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+}
+
+.theme-cyberpunk .hover\:bg-slate-50:hover .text-slate-800 {
+  color: #22d3ee !important;
+}
+
+/* ===== 蓝色背景状态 ===== */
+.theme-cyberpunk .bg-blue-50 {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+.theme-cyberpunk .bg-blue-50 .text-blue-600,
+.theme-cyberpunk .bg-blue-50 .text-blue-700 {
+  color: #06b6d4 !important;
+  text-shadow: 0 0 6px rgba(6, 182, 212, 0.6);
+}
+
+.theme-cyberpunk .bg-cyan-50\/50 {
+  background-color: rgba(6, 182, 212, 0.1) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+.theme-cyberpunk .bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+.theme-cyberpunk .bg-indigo-50 .text-indigo-600 {
+  color: #818cf8 !important;
+  text-shadow: 0 0 6px rgba(99, 102, 241, 0.6);
+}
+
+/* ===== 琥珀色/橙色背景 ===== */
+.theme-cyberpunk .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.theme-cyberpunk .bg-amber-50 .text-amber-600 {
+  color: #fbbf24 !important;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+
+/* ===== 玫瑰色背景 ===== */
+.theme-cyberpunk .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+.theme-cyberpunk .bg-rose-50 .text-rose-600 {
+  color: #fb7185 !important;
+  text-shadow: 0 0 6px rgba(244, 63, 94, 0.6);
+}
+
+/* ===== Agent 模块卡片霓虹样式 ===== */
+/* Agent 名称 */
+.theme-cyberpunk .agent-card .agent-name {
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+}
+
+/* Agent 模型文字 */
+.theme-cyberpunk .agent-card .font-mono.text-slate-400 {
+  color: #67e8f9 !important;
+}
+
+/* Tokens 标签和数值 */
+.theme-cyberpunk .agent-card .agent-label,
+.theme-cyberpunk .agent-card .agent-value {
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+}
+
+/* 鳞石文字 */
+.theme-cyberpunk .agent-card .text-cyan-600\/80 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+}
+
+.theme-cyberpunk .agent-card .agent-linshi {
+  color: #67e8f9 !important;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+}
+
+/* 任务状态文字 */
+.theme-cyberpunk .agent-card .text-blue-700,
+.theme-cyberpunk .agent-card .font-bold.truncate {
+  color: #06b6d4 !important;
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.8);
+}
+
+/* 空闲状态文字 */
+.theme-cyberpunk .agent-card .text-slate-400.truncate {
+  color: #67e8f9 !important;
+}
+
+/* 角色容器内的文字保持原色（不影响 RoleTag） */
+.theme-cyberpunk .agent-card .agent-roles-container .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* ===== Agent 下拉列表霓虹样式 ===== */
+/* 下拉列表整体背景 */
+.theme-cyberpunk .agent-roles-dropdown {
+  background-color: rgba(15, 23, 42, 0.95) !important;
+  border-color: rgba(6, 182, 212, 0.4) !important;
+}
+
+/* 下拉选项 hover 和选中状态统一为霓虹背景 */
+.theme-cyberpunk .agent-roles-dropdown .agent-role-option,
+.theme-cyberpunk .agent-roles-dropdown .agent-role-selected,
+.theme-cyberpunk .agent-roles-dropdown .hover\:bg-slate-50:hover {
+  background-color: rgba(6, 182, 212, 0.15) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+/* 选中状态添加霓虹边框 */
+.theme-cyberpunk .agent-roles-dropdown .agent-role-selected {
+  border: 1px solid rgba(6, 182, 212, 0.5) !important;
+  box-shadow: inset 0 0 10px rgba(6, 182, 212, 0.1) !important;
+}
+
+/* 下拉选项文字 */
+.theme-cyberpunk .agent-roles-dropdown .text-slate-800 {
+  color: #22d3ee !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+}
+
+/* 复选框颜色 */
+.theme-cyberpunk .agent-roles-dropdown .text-blue-600 {
+  color: #06b6d4 !important;
+}
