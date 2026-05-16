@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王磊 - 软件研发专家简历</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 针对A4纸张打印的优化 */
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        body {
+            background-color: #f3f4f6;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 20px auto;
+            /* 取消统一的 padding，由内部元素自己控制，彻底解决背景图截断问题 */
+            padding: 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        @media print {
+            body { background-color: white; }
+            .a4-page { margin: 0; box-shadow: none; border: none; }
+            .no-print { display: none; }
+        }
+
+        /* 简历专属定制样式 - 全面紧凑化 */
+        .section-title {
+            font-size: 1.05rem; /* 字体微调 */
+            font-weight: bold;
+            color: #1e3a8a;
+            background: linear-gradient(to right, #eff6ff, transparent);
+            padding: 0.25rem 0.5rem; /* 缩小内边距 */
+            border-left: 4px solid #1e3a8a;
+            border-radius: 0 3px 3px 0;
+            margin-bottom: 0.35rem; /* 大幅缩小下边距 */
+            margin-top: 0.5rem;    /* 大幅缩小上边距 */
+            display: flex;
+            align-items: center;
+        }
+        ul.custom-list li {
+            position: relative;
+            padding-left: 0.9rem;
+            margin-bottom: 0.15rem; /* 缩小列表间距 */
+            line-height: 1.4;
+        }
+        ul.custom-list li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="text-gray-800 font-sans leading-normal">
+
+    <!-- 第一页 开始 -->
+    <div class="a4-page relative">
+
+        <!-- 头部：更换为新上传的背景，并做高度比例和位置适配 (微调了渐变，让右侧偏白) -->
+        <header class="w-full px-[15mm] py-[6mm] relative shadow-md" style="background-color: #bfdbfe; background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 58, 138, 0.6) 35%, rgba(200, 225, 255, 0.35) 55%, rgba(255, 255, 255, 0) 80%), url('resume-bg-10.png'); background-size: cover; background-position: right center; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+            <div class="relative z-10 flex w-full items-center justify-between">
+
+                <!-- 左侧：姓名、求职意向及个人数据 -->
+                <div class="flex-1 pr-4">
+                    <!-- 第一行：姓名 + 求职意向 -->
+                    <div class="flex items-end gap-4 mb-2.5">
+                        <h1 class="text-3xl font-extrabold tracking-widest text-white leading-none drop-shadow-md">王 磊</h1>
+                        <span class="text-[13px] font-bold text-blue-900 bg-cyan-400 px-2 py-0.5 rounded shadow-sm mb-0.5 tracking-wide">求职意向：AI应用研发专家</span>
+                    </div>
+
+                    <!-- 下方：个人数据 (紧凑网格) -->
+                    <div class="grid grid-cols-2 gap-y-1.5 gap-x-2 text-[12px] pr-2">
+                        <!-- 电话 -->
+                        <div class="flex items-center">
+                            <svg class="w-3.5 h-3.5 text-cyan-400 mr-1.5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                            <span class="font-medium text-white tracking-wide drop-shadow-sm">19982085627</span>
+                        </div>
+                        <!-- 邮箱 -->
+                        <div class="flex items-center">
+                            <svg class="w-3.5 h-3.5 text-cyan-400 mr-1.5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            <span class="font-medium text-white tracking-wide drop-shadow-sm">489312578@qq.com</span>
+                        </div>
+                        <!-- 学历 -->
+                        <div class="flex items-center">
+                            <svg class="w-3.5 h-3.5 text-cyan-400 mr-1.5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>
+                            <span class="text-white drop-shadow-sm">硕士研究生</span>
+                        </div>
+                        <!-- 经验 -->
+                        <div class="flex items-center">
+                            <svg class="w-3.5 h-3.5 text-cyan-400 mr-1.5 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            <span class="text-white drop-shadow-sm">6年工作经验</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：真实头像框 -->
+                <div class="w-auto flex justify-end">
+                    <div class="w-[65px] h-[85px] bg-blue-900/10 border border-white/30 backdrop-blur-md rounded shadow-inner flex flex-col items-center justify-center text-white/90 overflow-hidden">
+                        <img src="touxiang.jpg" alt="头像" class="w-full h-full object-cover" />
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 下方主体内容容器 (单独设置内边距) -->
+        <div class="px-[15mm] pb-[10mm] flex-1 flex flex-col">
+
+            <!-- 综合资质 -->
+            <div class="mb-2.5">
+                <h2 class="section-title">综合背景</h2>
+                <div class="bg-white border border-gray-100 shadow-sm rounded p-2.5 space-y-2"> <!-- 减小 padding 和 space-y -->
+
+                    <!-- 第一行：教育背景 -->
+                    <div class="flex items-center text-[13px]">
+                        <span class="font-bold text-gray-800 w-[68px] shrink-0">教育经历</span>
+                        <div class="flex items-center flex-wrap gap-1.5">
+                            <span class="bg-slate-100 text-gray-800 px-2 py-0.5 rounded border border-slate-200 font-medium">北京航空航天大学</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <span class="text-blue-800 font-medium">工程管理 (硕)</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <span class="text-blue-800 font-medium">软件工程 (本)</span>
+                        </div>
+                    </div>
+
+                    <!-- 第二行：技能证书 -->
+                    <div class="flex items-center text-[13px]">
+                        <span class="font-bold text-gray-800 w-[68px] shrink-0">技能证书</span>
+                        <div class="flex items-center flex-wrap gap-1.5 text-[12px]">
+                            <span class="bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">系统架构设计师 (高级)</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <span class="bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">PMP认证</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <span class="bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">阿里云大模型/架构 ACP</span>
+                        </div>
+                    </div>
+
+                    <!-- 第三行：开源项目 -->
+                    <div class="flex items-center text-[13px]">
+                        <span class="font-bold text-gray-800 w-[68px] shrink-0">开源项目</span>
+                        <div class="flex items-center flex-wrap gap-1.5 text-[12px]">
+                            <span class="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-100 font-medium">XXXXX 核心贡献者</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <a href="https://github.com/xxxx/xxxx" class="text-gray-600 hover:text-blue-600 hover:underline flex items-center transition-colors">
+                                <svg class="w-3.5 h-3.5 mr-0.5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path></svg>
+                                电子简历展示 (github.com/xxxx)
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 工作经历 -->
+            <div class="mb-2.5">
+                <h2 class="section-title">工作经历</h2>
+
+                <!-- 经历一 -->
+                <div class="mb-2.5 bg-white p-2.5 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-blue-600"></div>
+
+                    <div class="flex justify-between items-center mb-1 pl-1.5">
+                        <div class="flex items-center flex-wrap gap-1.5">
+                            <span class="font-bold text-[14px] text-gray-900">阿里云智能集团（北京）</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <span class="font-bold text-[14px] text-blue-800">高级软件开发工程师</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <div class="flex gap-1">
+                                <span class="text-[11px] bg-slate-100 text-slate-700 px-1.5 py-[1px] rounded border border-slate-200 leading-tight">金融云</span>
+                                <span class="text-[11px] bg-slate-100 text-slate-700 px-1.5 py-[1px] rounded border border-slate-200 leading-tight">云原生</span>
+                            </div>
+                        </div>
+                        <span class="text-[12px] font-medium text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">2022.08 - 至今 (3年)</span>
+                    </div>
+
+                    <div class="mb-1.5 pl-1.5">
+                        <span class="inline-flex items-center text-[11px] font-medium bg-blue-50 text-blue-700 px-1.5 py-[1px] rounded border border-blue-100">
+                            年度绩效：2024 (3.75) <span class="mx-1 text-blue-200">|</span> 2023 (3.5+)
+                        </span>
+                    </div>
+
+                    <ul class="custom-list text-[13px] text-gray-700 space-y-0.5 pl-1.5">
+                        <li>依托阿里云基建、蚂蚁金融分布式架构，完成银行金融核心上云。</li>
+                        <li>主导云原生架构设计、云产品技术支持、技术专题设计和分享。</li>
+                    </ul>
+                </div>
+
+                <!-- 经历二 -->
+                <div class="mb-1 bg-white p-2.5 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-gray-400"></div>
+
+                    <div class="flex justify-between items-center mb-1 pl-1.5">
+                        <div class="flex items-center flex-wrap gap-1.5">
+                            <span class="font-bold text-[14px] text-gray-900">锐明技术（成都）</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <span class="font-bold text-[14px] text-gray-800">软件开发工程师</span>
+                            <span class="text-gray-300 font-light text-xs">|</span>
+                            <div class="flex gap-1">
+                                <span class="text-[11px] bg-slate-100 text-slate-700 px-1.5 py-[1px] rounded border border-slate-200 leading-tight">车联网</span>
+                                <span class="text-[11px] bg-slate-100 text-slate-700 px-1.5 py-[1px] rounded border border-slate-200 leading-tight">SAAS</span>
+                            </div>
+                        </div>
+                        <span class="text-[12px] font-medium text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">2019.04 - 2022.06 (3年)</span>
+                    </div>
+
+                    <div class="mb-1.5 pl-1.5">
+                        <span class="inline-flex items-center text-[11px] font-medium bg-blue-50 text-blue-700 px-1.5 py-[1px] rounded border border-blue-100">
+                            年度绩效：2021 (A) <span class="mx-1 text-blue-200">|</span> 2020 (B+)
+                        </span>
+                    </div>
+
+                    <ul class="custom-list text-[13px] text-gray-700 space-y-0.5 pl-1.5">
+                        <li>参与公交云平台 <span class="font-medium text-blue-800">从零到一</span> 研发，主导从单机到分布式微服务化重构。</li>
+                        <li>担任多个版本项目负责人，带队8人高质量完整开发任务。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 专业技能 -->
+            <div class="mb-0 flex-grow">
+                <h2 class="section-title">专业技能</h2>
+
+                <!-- 技能项一：AI应用研发 -->
+                <div class="mb-1.5 bg-white p-2 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-blue-600"></div>
+                    <div class="flex items-center gap-1.5 mb-1 pl-1.5">
+                        <span class="font-bold text-[14px] text-gray-900">AI 应用研发</span>
+                        <span class="text-gray-300 font-light text-xs">|</span>
+                        <span class="text-[11px] bg-indigo-50 text-indigo-700 px-1.5 py-[1px] rounded border border-indigo-100 leading-tight">大模型应用</span>
+                    </div>
+                    <ul class="custom-list text-[13px] text-gray-700 space-y-0.5 pl-1.5">
+                        <li>持有阿里云大模型ACP认证；</li>
+                        <li>深入了解大模型底层原理，对AI技术在业务场景中的结合与应用落地有清晰的认知与实践。</li>
+                    </ul>
+                </div>
+
+                <!-- 技能项二：架构设计 -->
+                <div class="mb-1.5 bg-white p-2 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-sky-500"></div>
+                    <div class="flex items-center gap-1.5 mb-1 pl-1.5">
+                        <span class="font-bold text-[14px] text-gray-900">架构设计</span>
+                        <span class="text-gray-300 font-light text-xs">|</span>
+                        <span class="text-[11px] bg-sky-50 text-sky-700 px-1.5 py-[1px] rounded border border-sky-100 leading-tight">微服务 / 高可用</span>
+                    </div>
+                    <ul class="custom-list text-[13px] text-gray-700 space-y-0.5 pl-1.5">
+                        <li>熟练基于 Dubbo、SpringCloud Alibaba 体系构建高可用微服务；</li>
+                        <li>深入理解 Nacos、Zookeeper、Seata 等核心组件原理，掌握 Paxos、Raft、ZAB 等主流分布式共识协议。</li>
+                    </ul>
+                </div>
+
+                <!-- 技能项三：中间件基础 -->
+                <div class="mb-1.5 bg-white p-2 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-teal-500"></div>
+                    <div class="flex items-center gap-1.5 mb-1 pl-1.5">
+                        <span class="font-bold text-[14px] text-gray-900">中间件基础</span>
+                        <span class="text-gray-300 font-light text-xs">|</span>
+                        <span class="text-[11px] bg-teal-50 text-teal-700 px-1.5 py-[1px] rounded border border-teal-100 leading-tight">高并发调优</span>
+                    </div>
+                    <ul class="custom-list text-[13px] text-gray-700 space-y-0.5 pl-1.5">
+                        <li>具备扎实的Java底层基础，熟悉JVM调优；</li>
+                        <li>精通MySQL引擎机制及SQL调优；深入理解Redis容灾架构及底层数据结构；</li>
+                        <li>熟练掌握Kafka工作原理及Netty网络框架开发。</li>
+                    </ul>
+                </div>
+
+                <!-- 技能项四：项目管理 -->
+                <div class="bg-white p-2 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-gray-400"></div>
+                    <div class="flex items-center gap-1.5 mb-1 pl-1.5">
+                        <span class="font-bold text-[14px] text-gray-900">项目管理</span>
+                        <span class="text-gray-300 font-light text-xs">|</span>
+                        <span class="text-[11px] bg-gray-100 text-gray-700 px-1.5 py-[1px] rounded border border-gray-200 leading-tight">PMP 持证</span>
+                    </div>
+                    <ul class="custom-list text-[13px] text-gray-700 space-y-0.5 pl-1.5">
+                        <li>PMP项目管理专业人士持证人；</li>
+                        <li>拥有4年项目带队经验，熟悉敏捷开发协同流程，擅长任务拆解与风险把控，能带领团队保质保量完成复杂的开发任务。</li>
+                    </ul>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <!-- 第一页 结束 -->
+
+    <!-- 分页符（打印时强制在此处换页） -->
+    <div class="page-break"></div>
+
+    <!-- 第二页 开始 (一页完美容纳4个核心项目) -->
+    <div class="a4-page relative px-[15mm] py-[15mm]">
+        <h2 class="section-title mt-0">项目经验</h2>
+
+        <!-- 项目一 -->
+        <div class="mb-4 bg-white p-3 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-blue-600"></div>
+
+            <div class="flex justify-between items-center border-b border-gray-100 pb-2 mb-2 pl-2">
+                <div class="flex items-center flex-wrap gap-2">
+                    <h3 class="font-bold text-[15px] text-gray-900">交通银行·两地三中心专有云</h3>
+                    <span class="text-gray-300 font-light text-xs">|</span>
+                    <span class="text-[11px] bg-indigo-50 text-indigo-700 px-1.5 py-[1px] rounded border border-indigo-100 leading-tight font-medium">核心开发 / 架构设计</span>
+                    <span class="text-gray-300 font-light text-xs">|</span>
+                    <span class="text-[11px] bg-gray-50 text-gray-600 px-1.5 py-[1px] rounded border border-gray-200 leading-tight">团队：42人</span>
+                </div>
+                <span class="text-[12px] font-bold text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">2023.07 - 至今</span>
+            </div>
+
+            <div class="text-[13px] text-gray-800 space-y-2.5 pl-2">
+                <div class="flex items-start gap-2">
+                    <div class="font-bold text-gray-600 pt-2 w-[65px] shrink-0 text-right">项目简介：</div>
+                    <div class="leading-relaxed text-justify bg-gray-50 p-2 rounded border border-gray-100 flex-1">
+                        收到发斯蒂芬斯蒂芬手动阀手打发撒代发是地方手动阀手动阀手动阀是谁的发送到水电费水电费水电费水电费水电费（注：此处为待补充详情的占位文本，请根据实际情况完善项目的背景、业务目标和整体挑战）。
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <div class="font-bold text-gray-600 mt-[2px] w-[65px] shrink-0 text-right">个人业绩：</div>
+                    <div class="leading-relaxed text-justify flex-1">
+                        <ul class="list-decimal list-outside pl-4 space-y-1">
+                            <li><span class="font-medium text-gray-900">[业绩一：架构演进]</span> 主导了核心支付链路的微服务重构，将系统吞吐量提升了XX%。</li>
+                            <li><span class="font-medium text-gray-900">[业绩二：容灾高可用]</span> 设计并实现了基于XX组件的分布式容灾方案，保障了线上服务全年 RTO < X分钟。</li>
+                            <li><span class="font-medium text-gray-900">[业绩三：性能调优]</span> 优化了复杂SQL查询和Redis缓存命中策略，使核心接口平均响应时间降低XXms。</li>
+                            <li><span class="font-medium text-gray-900">[业绩四：稳定性保障]</span> 攻克了高并发场景下的XX数据一致性难题，在多次大促中实现0故障。</li>
+                            <li><span class="font-medium text-gray-900">[业绩五：技术赋能]</span> 沉淀通用技术组件XX个，并主导编写XX篇技术白皮书，团队开发效率提升XX%。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 项目二 -->
+        <div class="mb-4 bg-white p-3 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-sky-500"></div>
+
+            <div class="flex justify-between items-center border-b border-gray-100 pb-2 mb-2 pl-2">
+                <div class="flex items-center flex-wrap gap-2">
+                    <h3 class="font-bold text-[15px] text-gray-900">[补充项目名称二]</h3>
+                    <span class="text-gray-300 font-light text-xs">|</span>
+                    <span class="text-[11px] bg-indigo-50 text-indigo-700 px-1.5 py-[1px] rounded border border-indigo-100 leading-tight font-medium">项目负责人 (PM)</span>
+                    <span class="text-gray-300 font-light text-xs">|</span>
+                    <span class="text-[11px] bg-gray-50 text-gray-600 px-1.5 py-[1px] rounded border border-gray-200 leading-tight">团队：8人</span>
+                </div>
+                <span class="text-[12px] font-bold text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">YYYY.MM - YYYY.MM</span>
+            </div>
+
+            <div class="text-[13px] text-gray-800 space-y-2.5 pl-2">
+                <div class="flex items-start gap-2">
+                    <div class="font-bold text-gray-600 pt-2 w-[65px] shrink-0 text-right">项目简介：</div>
+                    <div class="leading-relaxed text-justify bg-gray-50 p-2 rounded border border-gray-100 flex-1">
+                        [请在此处补充该项目的背景、业务目标和整体架构等简要介绍]
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <div class="font-bold text-gray-600 mt-[2px] w-[65px] shrink-0 text-right">个人业绩：</div>
+                    <div class="leading-relaxed text-justify flex-1">
+                        <ul class="list-decimal list-outside pl-4 space-y-1">
+                            <li><span class="font-medium text-gray-900">[业绩一：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩二：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩三：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩四：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩五：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 项目三 -->
+        <div class="mb-4 bg-white p-3 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-teal-500"></div>
+
+            <div class="flex justify-between items-center border-b border-gray-100 pb-2 mb-2 pl-2">
+                <div class="flex items-center flex-wrap gap-2">
+                    <h3 class="font-bold text-[15px] text-gray-900">[补充项目名称三]</h3>
+                    <span class="text-gray-300 font-light text-xs">|</span>
+                    <span class="text-[11px] bg-indigo-50 text-indigo-700 px-1.5 py-[1px] rounded border border-indigo-100 leading-tight font-medium">核心研发</span>
+                    <span class="text-gray-300 font-light text-xs">|</span>
+                    <span class="text-[11px] bg-gray-50 text-gray-600 px-1.5 py-[1px] rounded border border-gray-200 leading-tight">团队：X人</span>
+                </div>
+                <span class="text-[12px] font-bold text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">YYYY.MM - YYYY.MM</span>
+            </div>
+
+            <div class="text-[13px] text-gray-800 space-y-2.5 pl-2">
+                <div class="flex items-start gap-2">
+                    <div class="font-bold text-gray-600 pt-2 w-[65px] shrink-0 text-right">项目简介：</div>
+                    <div class="leading-relaxed text-justify bg-gray-50 p-2 rounded border border-gray-100 flex-1">
+                        [请在此处补充该项目的背景、业务目标和整体架构等简要介绍]
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <div class="font-bold text-gray-600 mt-[2px] w-[65px] shrink-0 text-right">个人业绩：</div>
+                    <div class="leading-relaxed text-justify flex-1">
+                        <ul class="list-decimal list-outside pl-4 space-y-1">
+                            <li><span class="font-medium text-gray-900">[业绩一：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩二：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩三：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩四：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩五：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 项目四 -->
+        <div class="mb-4 bg-white p-3 rounded border border-gray-200 shadow-sm relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-gray-400"></div>
+
+            <div class="flex justify-between items-center border-b border-gray-100 pb-2 mb-2 pl-2">
+                <div class="flex items-center flex-wrap gap-2">
+                    <h3 class="font-bold text-[15px] text-gray-900">[补充项目名称四]</h3>
+                    <span class="text-gray-300 font-light text-xs">|</span>
+                    <span class="text-[11px] bg-indigo-50 text-indigo-700 px-1.5 py-[1px] rounded border border-indigo-100 leading-tight font-medium">研发工程师</span>
+                    <span class="text-gray-300 font-light text-xs">|</span>
+                    <span class="text-[11px] bg-gray-50 text-gray-600 px-1.5 py-[1px] rounded border border-gray-200 leading-tight">团队：X人</span>
+                </div>
+                <span class="text-[12px] font-bold text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">YYYY.MM - YYYY.MM</span>
+            </div>
+
+            <div class="text-[13px] text-gray-800 space-y-2.5 pl-2">
+                <div class="flex items-start gap-2">
+                    <div class="font-bold text-gray-600 pt-2 w-[65px] shrink-0 text-right">项目简介：</div>
+                    <div class="leading-relaxed text-justify bg-gray-50 p-2 rounded border border-gray-100 flex-1">
+                        [请在此处补充该项目的背景、业务目标和整体架构等简要介绍]
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-2">
+                    <div class="font-bold text-gray-600 mt-[2px] w-[65px] shrink-0 text-right">个人业绩：</div>
+                    <div class="leading-relaxed text-justify flex-1">
+                        <ul class="list-decimal list-outside pl-4 space-y-1">
+                            <li><span class="font-medium text-gray-900">[业绩一：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩二：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩三：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩四：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                            <li><span class="font-medium text-gray-900">[业绩五：核心指标]</span> 请在此补充您的具体工作成果。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- 第二页 结束 -->
+
+</body>
+</html>
