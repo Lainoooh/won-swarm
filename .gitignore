@@ -41,11 +41,14 @@ wheels/
 *.sqlite
 *.sqlite3
 
-# Documents (keep only templates)
+# Documents (general ignore, but allow UI/ assets)
+# Negation must come AFTER the patterns it overrides
 *.pdf
 *.png
 *.jpg
 *.jpeg
+!UI/
+!UI/**
 
 # Node (if frontend uses npm)
 node_modules/
